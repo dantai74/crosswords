@@ -5,12 +5,18 @@ const vm = require("node:vm");
 const test = require("node:test");
 const { createDocument, event } = require("./helpers/dom.cjs");
 
-function mount(data, puzzleFile = "puzzles/final-assessment-2026-04-12.data.js") {
+function mount(data, puzzleFile = "puzzles/final-assessment-2026-04-12.data.js", options = {}) {
   const document = createDocument();
+  const media = {
+    matches: Boolean(options.touch),
+    addEventListener(type, handler) { this.change = handler; },
+  };
   const saved = new Map();
   let saves = 0;
   const context = vm.createContext({
     document,
+    matchMedia: () => media,
+    scrollBy: options.scrollBy || (() => {}),
     localStorage: {
       getItem: (key) => saved.get(key),
       setItem: (key, value) => { saved.set(key, value); saves++; },
@@ -27,7 +33,7 @@ function mount(data, puzzleFile = "puzzles/final-assessment-2026-04-12.data.js")
   const originalOrder = JSON.stringify(context.PUZZLE_DATA.down.map((entry) => entry.pub));
   const root = document.createElement("div");
   context.mountCrosswordPuzzle(root);
-  return { root, document, context, originalOrder, saveCount: () => saves };
+  return { root, document, context, media, originalOrder, saveCount: () => saves };
 }
 
 test("shell mounts the full puzzle with hints beside the board and reference last", () => {
@@ -290,4 +296,127 @@ test("Jump Scares preserves theme fragments and keeps their explanations inside 
     assert.equal(root.querySelector("#hint-basic .answer-explanation"), null);
     assert.equal(root.querySelectorAll("#hint-ext details").length, 4);
   }
+});
+
+test("desktop keeps editable inputs, expanded hints, and no touch keyboard", () => {
+  const scrolls = [];
+  const { root, document } = mount(undefined, undefined, { scrollBy: (options) => scrolls.push(options) });
+  assert.equal(root.querySelector(".touch-keyboard").hidden, true);
+  assert.equal(root.querySelector(".puzzle-shell").classList.contains("touch-mode"), false);
+  assert.equal(root.querySelector(".hint-extras").open, true);
+  assert.ok(root.querySelectorAll("input").every((input) => !input.readOnly && input.inputMode === "text"));
+  assert.equal(document.activeElement.focusOptions.preventScroll, false);
+  document.activeElement.value = "C";
+  document.activeElement.dispatchEvent(event("input"));
+  assert.equal(document.activeElement.dataset.c, "1");
+  document.activeElement.dispatchEvent(event("keydown", { key: "Backspace" }));
+  assert.equal(document.activeElement.dataset.c, "0");
+  assert.equal(document.activeElement.value, "");
+  assert.equal(scrolls.length, 0);
+});
+
+test("small touch screens use a dedicated keyboard and collapsed hints for every puzzle", () => {
+  for (const file of ["final-assessment-2026-04-12", "set-aside-2026-10-28", "jump-scares-2026-10-29"]) {
+    const { root, document } = mount(undefined, `puzzles/${file}.data.js`, { touch: true });
+    assert.equal(root.querySelector(".touch-keyboard").hidden, false);
+    assert.equal(root.querySelector(".puzzle-shell").classList.contains("touch-mode"), true);
+    assert.equal(root.querySelector(".hint-extras").open, false);
+    assert.ok(root.querySelectorAll("input").every((input) => input.readOnly && input.inputMode === "none"));
+    assert.equal(document.activeElement.focusOptions.preventScroll, true);
+    assert.equal(root.querySelectorAll(".keyboard-key").length, 28);
+    const firstWord = root.querySelector("#hint-basic h3").textContent;
+    assert.equal(root.querySelectorAll(".preview-letter").length, Number(firstWord.match(/\((\d+) letters\)/)[1]));
+  }
+});
+
+test("touch letter keys save and advance, with backspace and a large word preview", () => {
+  const { root, document } = mount(undefined, undefined, { touch: true });
+  const key = root.querySelector('.keyboard-key[data-key="C"]');
+  const press = event("pointerdown");
+  key.dispatchEvent(press);
+  assert.equal(press.defaultPrevented, true);
+  key.dispatchEvent(event("click"));
+  assert.equal(root.querySelectorAll(".cell-letter")[0].textContent, "C");
+  assert.equal(root.querySelectorAll(".preview-letter")[0].textContent, "C");
+  assert.equal(root.querySelectorAll(".preview-letter")[1].getAttribute("aria-pressed"), "true");
+  assert.match(root.querySelector(".puzzle-progress").textContent, /^1 \/ 363/);
+  assert.equal(document.activeElement.dataset.c, "1");
+  root.querySelector('.keyboard-key[data-key="Backspace"]').dispatchEvent(event("click"));
+  assert.equal(document.activeElement.dataset.c, "0");
+  assert.equal(document.activeElement.value, "");
+  assert.match(root.querySelector(".puzzle-progress").textContent, /^0 \/ 363/);
+  assert.equal(root.querySelectorAll(".cell-letter")[0].textContent, "");
+  root.querySelectorAll(".preview-letter")[4].dispatchEvent(event("click"));
+  assert.equal(document.activeElement.dataset.c, "4");
+  assert.match(root.querySelector(".keyboard-top span").textContent, /Letter 5 of 5/);
+});
+
+test("touch phones retain hardware typing and navigate Down clues by printed number", () => {
+  const { root, document } = mount(undefined, undefined, { touch: true });
+  document.activeElement.dispatchEvent(event("keydown", { key: " " }));
+  document.activeElement.dispatchEvent(event("keydown", { key: "c" }));
+  assert.equal(document.activeElement.dataset.r, "1");
+  assert.equal(document.activeElement.dataset.c, "0");
+  root.querySelector('.keyboard-key[data-key="Next"]').dispatchEvent(event("click"));
+  assert.match(root.querySelector("#hint-basic h3").textContent, /^Down 2 /);
+  root.querySelectorAll(".word-nav")[0].dispatchEvent(event("click"));
+  assert.match(root.querySelector("#hint-basic h3").textContent, /^Down 1 /);
+});
+
+test("the touch keyboard can hide and reopens when a square is tapped", () => {
+  const { root, document } = mount(undefined, undefined, { touch: true });
+  const keyboard = root.querySelector(".touch-keyboard");
+  root.querySelector(".keyboard-top button").dispatchEvent(event("click"));
+  assert.equal(keyboard.classList.contains("collapsed"), true);
+  assert.equal(root.querySelector(".keyboard-top button").getAttribute("aria-expanded"), "false");
+  document.activeElement.dispatchEvent(event("pointerdown"));
+  assert.equal(keyboard.classList.contains("collapsed"), false);
+  assert.equal(root.querySelector(".keyboard-top button").getAttribute("aria-expanded"), "true");
+});
+
+test("switching back to a desktop input mode preserves letters and restores native editing", () => {
+  const { root, media } = mount(undefined, undefined, { touch: true });
+  root.querySelector('.keyboard-key[data-key="C"]').dispatchEvent(event("click"));
+  media.matches = false;
+  media.change();
+  assert.equal(root.querySelector(".touch-keyboard").hidden, true);
+  assert.equal(root.querySelector(".hint-extras").open, true);
+  assert.equal(root.querySelector(".puzzle-shell").classList.contains("touch-mode"), false);
+  assert.equal(root.querySelectorAll("input")[0].value, "C");
+  assert.ok(root.querySelectorAll("input").every((input) => !input.readOnly && input.inputMode === "text"));
+});
+
+test("phone grid tools offer zoom and a direct jump to the clue lists", () => {
+  const { root } = mount(undefined, undefined, { touch: true });
+  const [zoom, clues] = root.querySelectorAll(".grid-tools button");
+  zoom.dispatchEvent(event("click"));
+  assert.equal(root.querySelector(".grid-wrap").classList.contains("zoomed"), true);
+  assert.equal(zoom.textContent, "Fit grid");
+  zoom.dispatchEvent(event("click"));
+  assert.equal(root.querySelector(".grid-wrap").classList.contains("zoomed"), false);
+  assert.equal(zoom.getAttribute("aria-pressed"), "false");
+  clues.dispatchEvent(event("click"));
+  assert.equal(root.querySelector(".clue-panels").scrollIntoViewOptions.block, "start");
+});
+
+test("touch navigation keeps the active square above the fixed keyboard", () => {
+  const scrolls = [];
+  const { root, document } = mount(undefined, undefined, { touch: true, scrollBy: (options) => scrolls.push(options) });
+  root.querySelector(".hint-box").rect = { top: 0, bottom: 180, height: 180 };
+  root.querySelector(".touch-keyboard").rect = { top: 500, bottom: 700, height: 200 };
+  const destination = root.querySelectorAll("input").find((input) => input.dataset.r === "1" && input.dataset.c === "0");
+  destination.parentElement.rect = { top: 570, bottom: 600, height: 30 };
+  document.activeElement.dispatchEvent(event("keydown", { key: "ArrowDown" }));
+  assert.equal(scrolls.at(-1).top, 108);
+});
+
+test("phone word previews show checked mistakes and clear them after editing", () => {
+  const { root } = mount(undefined, undefined, { touch: true });
+  root.querySelector('.keyboard-key[data-key="Z"]').dispatchEvent(event("click"));
+  root.querySelector(".toolbar button").dispatchEvent(event("click"));
+  assert.equal(root.querySelectorAll(".preview-letter")[0].classList.contains("wrong"), true);
+  assert.equal(root.querySelectorAll(".preview-letter")[0].getAttribute("aria-invalid"), "true");
+  root.querySelectorAll(".preview-letter")[0].dispatchEvent(event("click"));
+  root.querySelector('.keyboard-key[data-key="C"]').dispatchEvent(event("click"));
+  assert.equal(root.querySelectorAll(".preview-letter")[0].classList.contains("wrong"), false);
 });

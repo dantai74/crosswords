@@ -220,7 +220,7 @@ a {
   z-index: 1;
   top: 2px;
   left: 3px;
-  font: 500 11.7px / 1 system-ui, sans-serif;
+  font: 500 var(--number-size, 11.7px) / 1 system-ui, sans-serif;
   color: var(--ink);
   pointer-events: none;
 }
@@ -232,9 +232,9 @@ a {
   height: 100%;
   border: 0;
   border-radius: 0;
-  padding: 12px 2px 1px;
+  padding: var(--letter-top, 12px) 2px 1px;
   text-align: center;
-  font: 600 19.5px / 1 system-ui, sans-serif;
+  font: 600 var(--letter-size, 19.5px) / 1 system-ui, sans-serif;
   color: var(--ink);
   text-transform: uppercase;
   background: transparent;
@@ -521,6 +521,19 @@ a:focus-visible {
   margin-top: 0.75rem;
 }
 
+.grid-tools,
+.cell-letter,
+.word-preview,
+.word-nav,
+.hint-extras > summary,
+.touch-keyboard {
+  display: none;
+}
+
+.touch-keyboard[hidden] {
+  display: none;
+}
+
 @media (min-width: 640px) {
   .clue-panels {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -549,5 +562,414 @@ a:focus-visible {
 
   .grid-panel {
     padding: 0.5rem;
+  }
+}
+
+@media (max-width: 760px) and (pointer: coarse), (max-height: 520px) and (pointer: coarse) {
+  body {
+    padding: max(0.5rem, env(safe-area-inset-top)) max(0.5rem, env(safe-area-inset-right)) 1.5rem max(0.5rem, env(safe-area-inset-left));
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .puzzle-nav {
+    margin-bottom: 0.65rem;
+    font-size: 0.8rem;
+  }
+
+  .puzzle-nav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.5rem;
+  }
+
+  .puzzle-header {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .puzzle-header .eyebrow {
+    display: none;
+  }
+
+  .puzzle-header h1 {
+    font-size: 1.6rem;
+  }
+
+  .puzzle-header .byline {
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+  }
+
+  .puzzle-progress {
+    max-width: 6.5rem;
+    padding: 0.5rem;
+    font-size: 0.7rem;
+    text-align: center;
+  }
+
+  .puzzle-shell.touch-mode {
+    padding-bottom: calc(13.5rem + env(safe-area-inset-bottom));
+  }
+
+  .puzzle-shell.keyboard-collapsed {
+    padding-bottom: calc(3.5rem + env(safe-area-inset-bottom));
+  }
+
+  .puzzle-main {
+    grid-template-areas: "hints" "board" "clues";
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+
+  .hint-box {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    max-height: 48vh;
+    max-height: 48dvh;
+    overflow: auto;
+    padding: 0.65rem;
+    border-radius: 10px;
+    box-shadow: 0 3px 12px #263b2c16;
+  }
+
+  .hint-box > h2 {
+    display: none;
+  }
+
+  .clue-navigation {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .clue-navigation .direction-switch {
+    flex: 1;
+    margin: 0;
+    padding: 0.15rem;
+  }
+
+  .direction-switch button,
+  .word-nav {
+    min-height: 2.75rem;
+  }
+
+  .word-nav {
+    display: block;
+    flex-shrink: 0;
+    width: 2.75rem;
+    padding: 0;
+    border: 1px solid #d6dbd1;
+    border-radius: 8px;
+    background: #fff;
+    color: var(--accent);
+    font-size: 1.75rem;
+    cursor: pointer;
+  }
+
+  #hint-basic h3 {
+    margin-bottom: 0.25rem;
+    font-size: 0.7rem;
+  }
+
+  .basic-clue {
+    margin-bottom: 0.6rem;
+    font-size: 1.1rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  .word-preview {
+    display: flex;
+    position: relative;
+    gap: 3px;
+    padding: 2px;
+    overflow: auto;
+    scrollbar-width: none;
+  }
+
+  .preview-letter {
+    flex: 0 0 2rem;
+    height: 2.5rem;
+    border: 1px solid #cbd5c4;
+    border-radius: 5px;
+    padding: 0;
+    background: #f4f7ee;
+    color: var(--ink);
+    font: 600 1.1rem system-ui, sans-serif;
+  }
+
+  .preview-letter[aria-pressed="true"] {
+    border: 2px solid #9c7136;
+    background: #fff0cb;
+  }
+
+  .preview-letter.wrong {
+    border-color: var(--wrong);
+    background: #fdecea;
+    color: var(--wrong);
+  }
+
+  .hint-extras > summary {
+    display: list-item;
+    min-height: 2.5rem;
+    padding: 0.65rem 0.15rem 0.25rem;
+    color: var(--accent);
+    font: 600 0.8rem system-ui, sans-serif;
+    cursor: pointer;
+  }
+
+  .hint-extras[open] > summary {
+    margin-bottom: 0.75rem;
+  }
+
+  .grid-panel {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .grid-tools {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .grid-tools button {
+    min-height: 2.75rem;
+    border: 1px solid #d6dbd1;
+    border-radius: 7px;
+    padding: 0.5rem 0.85rem;
+    background: #fffefa;
+    color: var(--accent);
+    font: 500 0.85rem system-ui, sans-serif;
+  }
+
+  .cross-grid {
+    --cell-size: min(36.4px, calc((100vw - max(0.5rem, env(safe-area-inset-left)) - max(0.5rem, env(safe-area-inset-right)) - 6px) / var(--grid-columns)));
+    --letter-size: 16px;
+    --display-letter-size: clamp(10px, calc(var(--cell-size) * 0.68), 22px);
+    --number-size: clamp(7px, calc(var(--cell-size) * 0.28), 11.7px);
+    --letter-top: clamp(3px, calc(var(--cell-size) * 0.2), 7px);
+  }
+
+  .cross-grid .cell-input {
+    padding-inline: 0;
+    padding-bottom: 0;
+    color: transparent;
+  }
+
+  .cross-grid .cell-letter {
+    display: flex;
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    align-items: center;
+    justify-content: center;
+    padding-top: calc(var(--cell-size) * 0.25);
+    pointer-events: none;
+    color: var(--ink);
+    font: 600 var(--display-letter-size) / 1 system-ui, sans-serif;
+  }
+
+  .cross-grid .cell-input.wrong + .cell-letter {
+    color: var(--wrong);
+  }
+
+  .cross-grid .cell-input.wrong {
+    color: transparent;
+  }
+
+  .cross-grid .cell-num {
+    z-index: 3;
+    top: 1px;
+    left: 1px;
+  }
+
+  .grid-wrap.zoomed {
+    max-height: 24rem;
+    max-height: min(52dvh, 24rem);
+  }
+
+  .grid-wrap.zoomed .cross-grid {
+    --cell-size: 36.4px;
+    --display-letter-size: 22px;
+    --number-size: 11.7px;
+    --letter-top: 10px;
+  }
+
+  .toolbar {
+    margin: 0.75rem 0;
+    gap: 0.5rem;
+  }
+
+  .toolbar button {
+    flex: 1;
+    min-height: 2.75rem;
+    padding: 0.6rem 0.4rem;
+  }
+
+  #grid-help {
+    display: none;
+  }
+
+  .clue-panels {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+    scroll-margin-top: 14rem;
+  }
+
+  .clues {
+    padding: 0.9rem;
+  }
+
+  .clue-list {
+    max-height: 24rem;
+  }
+
+  .clue-btn {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
+
+  .clue-word {
+    line-height: 1.8;
+  }
+
+  .touch-keyboard {
+    display: block;
+    position: fixed;
+    z-index: 10;
+    inset: auto 0 0;
+    padding: 0.35rem max(0.35rem, env(safe-area-inset-right)) max(0.5rem, env(safe-area-inset-bottom)) max(0.35rem, env(safe-area-inset-left));
+    border-top: 1px solid #c9d0c3;
+    background: #e4e8df;
+    box-shadow: 0 -3px 16px #263b2c12;
+    touch-action: manipulation;
+  }
+
+  .keyboard-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    min-height: 2rem;
+    padding-inline: 0.3rem;
+    color: var(--accent);
+    font: 500 0.7rem system-ui, sans-serif;
+  }
+
+  .keyboard-top button {
+    min-height: 2rem;
+    border: 0;
+    border-radius: 5px;
+    padding: 0.35rem;
+    background: transparent;
+    color: var(--accent);
+    font: inherit;
+    text-decoration: underline;
+  }
+
+  .keyboard-rows {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .keyboard-row {
+    display: flex;
+    justify-content: center;
+    gap: 0.25rem;
+  }
+
+  .keyboard-row:nth-child(2) {
+    padding-inline: 4%;
+  }
+
+  .keyboard-key {
+    flex: 1;
+    min-width: 0;
+    min-height: 2.75rem;
+    padding: 0;
+    border: 1px solid #c8cec2;
+    border-bottom-width: 2px;
+    border-radius: 6px;
+    background: #fff;
+    color: var(--ink);
+    font: 500 1.1rem system-ui, sans-serif;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .keyboard-key:active {
+    background: #cddac1;
+  }
+
+  .keyboard-action {
+    flex: 1.6;
+    background: #cad4c1;
+    font-size: 0.75rem;
+  }
+
+  .keyboard-action[data-key="Backspace"] {
+    font-size: 1.4rem;
+  }
+
+  .touch-keyboard.collapsed .keyboard-rows {
+    display: none;
+  }
+
+  .puzzle-table,
+  .puzzle-table tbody,
+  .puzzle-table tr,
+  .puzzle-table td {
+    display: block;
+    width: 100%;
+    max-width: none;
+  }
+
+  .puzzle-table td.pct {
+    width: 100%;
+  }
+
+  .puzzle-table {
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .puzzle-table thead {
+    display: none;
+  }
+
+  .puzzle-table tr {
+    margin-bottom: 0.85rem;
+    border: 1px solid #deded4;
+    border-radius: 12px;
+    padding: 0.5rem;
+    background: #fffefa;
+  }
+
+  .puzzle-table td {
+    border: 0;
+    padding: 0.4rem 0.6rem;
+  }
+
+  .puzzle-table a {
+    display: flex;
+    align-items: center;
+    min-height: 2.75rem;
+    font-size: 1.25rem;
+  }
+
+  .puzzle-table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 0.25rem;
+    color: var(--muted);
+    font: 500 0.7rem system-ui, sans-serif;
   }
 }

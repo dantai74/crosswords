@@ -34,6 +34,18 @@ Click any blue, underlined word in the active clue or either clue list, such as 
 
 If browser storage is unavailable or full, a status message appears and you can keep solving in memory. Those changes may be lost when you leave the page.
 
+## Phone controls
+
+Small touch screens automatically get a phone layout based on screen size and pointer capability. Desktop layout and physical-keyboard controls remain available as before.
+
+- **Grid fits the screen:** tap a square, or use **Zoom grid** for larger cells and pan around. **Fit grid** returns to the full-board view.
+- **Active clue stays close:** a compact panel above the board shows the clue and a larger strip of its letters. Tap a letter in that strip to choose the exact cell. Previous/next buttons navigate clues in numerical order.
+- **Crossword keyboard:** letter keys fill and advance in your chosen direction; delete clears a letter, and **Next** moves to the next clue. It replaces the phone keyboard while solving, avoiding autocorrect and repeated keyboard popups. Connected physical keyboards still work.
+- **Hints on demand:** tap **Hints & answer** to expand the existing hint tiers and spoiler control. Across/Down buttons switch direction.
+- **More room when needed:** hide the crossword keyboard to read clues or the reference image; tapping a square or a letter in the word strip brings it back. **All clues** jumps to the numbered lists.
+
+The puzzle library also becomes a list of cards on phones. Saved progress and Google meaning links work the same way as on desktop.
+
 ## Publish with GitHub Pages
 
 The deployment workflow is [`.github/workflows/pages.yml`](.github/workflows/pages.yml). After these changes are committed and pushed, enable it once:
@@ -65,7 +77,9 @@ make test
 
 The suite checks puzzle data against a source screenshot fixture, complete crossing answers, hint coverage and repeated placeholders, clue numbering, saved-progress sanitization and revisions, storage failures, and index loading/retry behavior. DOM fixtures exercise shell mounting, sorted clue selection, double-click switching, and hint persistence. Deployment tests build a standalone package and verify that page links, scripts, and screenshots resolve under `/crosswords/`, with no symlinks. No npm dependencies are required.
 
-For UI changes, also serve `web/` and check keyboard entry and navigation, Tab/Shift+Tab leaving the grid, double-click and Space switching direction, hint expansion while typing, progress after reload, and the layout above and below 1160px viewport width. The clue lists become two columns at 640px; check horizontal grid scrolling on phones.
+For UI changes, also serve `web/` and check keyboard entry and navigation, Tab/Shift+Tab leaving the grid, double-click and Space switching direction, hint expansion while typing, progress after reload, and the desktop layout above and below 1160px viewport width. The desktop clue lists become two columns at 640px; small touch screens use the separate phone layout.
+
+For phone changes, check Safari on iPhone and Chrome on Android at narrow widths (including 320px and 390px), both grid sizes, portrait/landscape rotation, the fitted and zoomed grid, word-strip selection, delete/next, keyboard hiding, expanded hints, and returning from a Google lookup. Phone interaction tests use a DOM fixture; real-device visual and touch checks remain manual.
 
 ## Project layout
 

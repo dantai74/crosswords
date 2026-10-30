@@ -10,8 +10,11 @@ class Element {
     this.value = "";
     this.tabIndex = -1;
     this.clientHeight = 0;
+    this.clientWidth = 0;
     this.clientTop = 0;
+    this.clientLeft = 0;
     this.scrollTop = 0;
+    this.scrollLeft = 0;
     this.style = { setProperty(name, value) { this[name] = value; } };
     this.classList = {
       contains: (name) => this.className.split(/\s+/).includes(name),
@@ -101,12 +104,14 @@ class Element {
     if (event.bubbles && this.parentElement) this.parentElement.dispatchEvent(event);
     return !event.defaultPrevented;
   }
-  focus() {
+  focus(options) {
+    this.focusOptions = options;
     if (this.ownerDocument.activeElement === this) return;
     this.ownerDocument.activeElement = this;
     this.dispatchEvent({ type: "focus" });
   }
   select() { this.selected = true; }
+  scrollIntoView(options) { this.scrollIntoViewOptions = options; }
   getBoundingClientRect() { return this.rect || { top: 0, bottom: 0, height: 0 }; }
 }
 

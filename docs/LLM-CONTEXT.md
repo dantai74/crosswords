@@ -115,6 +115,11 @@ Saved payload (conceptually): `{ cells: { "r,c": "A" }, filled, total, correctCo
 - When the active word changes, its clue list scrolls to reveal the highlighted row. Adjust only the list's `scrollTop`, preserving grid focus and the document's scroll position; already visible rows and moves within the same word do not scroll.
 - Cells are 36.4px (30% larger than the original 28px), with proportionally larger letters and numbers. The active word is highlighted.
 - At 1160px and wider, the active clue and hints sit beside the grid; Across and Down lists sit below. Lists display in numerical order, preserving original array indices for grid selection. At 640px the clue lists become two columns. The screenshot is in collapsed reference details after the main layout.
+- Phone mode is detected with `matchMedia`: a coarse pointer plus width ≤760px or height ≤520px. Matching CSS queries keep phone changes isolated from desktop. The media-change handler restores native editing when leaving touch mode.
+- On phones, the clue panel sits above the fitted board, hints are in collapsed outer details, and a larger active-word letter strip supports exact cell selection. Previous/next navigation sorts published numbers independently of the engine's word order.
+- The phone keyboard uses read-only inputs with `inputMode="none"` to suppress the system keyboard. Physical letter/backspace keys still work. Visual cell letters use a separate `aria-hidden` span sized to the grid, while the input font stays 16px to avoid focus zoom. Desktop uses normal editable inputs and hides the extra span and phone controls.
+- Touch input, native input, and backspace share `writeCell`/`eraseLetter`, including persistence, mistake clearing, previews, and auto-advance. Keep direction unchanged on arrows. Zoom reveals the active square within the grid; touch focus uses `preventScroll` and explicitly keeps the square between the clue panel and fixed keyboard.
+- The on-screen keyboard can collapse, and tapping a grid cell or preview letter restores it. Source screenshots remain at the bottom. Phone library rows become cards with progress and last-played labels.
 
 ### Regression checks
 

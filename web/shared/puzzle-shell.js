@@ -20,9 +20,13 @@
     let ar = 0;
     let ac = 0;
     const inputs = {};
+    const cellLetters = {};
     let userCells = {};
     let renderedWord = "";
     let highlightedCells = [];
+    let previewCells = [];
+    const touchLayout = global.matchMedia?.("(max-width: 760px) and (pointer: coarse), (max-height: 520px) and (pointer: coarse)");
+    let touchMode = Boolean(touchLayout?.matches);
     const progressLabel = document.createElement("p");
     progressLabel.className = "puzzle-progress";
     const saveStatus = document.createElement("p");
@@ -35,6 +39,7 @@
 
     function persist() {
       const filled = Prog.countFilledCells(userCells, rows);
+      updatePreview();
       progressLabel.textContent = `${filled} / ${totalWhite} letters filled`;
       const cc = Eng.countCorrectCells(
         rows,
@@ -90,10 +95,94 @@
       const inp = inputs[`${r},${c}`];
       if (inp) {
         inp.tabIndex = 0;
-        inp.focus();
-        inp.select();
+        inp.focus({ preventScroll: touchMode });
+        if (!touchMode) inp.select();
       }
       updateChrome();
+      if (touchMode) {
+        revealWithin(gridWrap, inp.parentElement);
+        const cell = inp.parentElement.getBoundingClientRect();
+        const top = hintBox.getBoundingClientRect().bottom + 8;
+        const bottom = keyboard.getBoundingClientRect().top - 8;
+        if (bottom > top) {
+          if (cell.bottom > bottom) global.scrollBy?.({ top: cell.bottom - bottom, behavior: "auto" });
+          else if (cell.top < top) global.scrollBy?.({ top: cell.top - top, behavior: "auto" });
+        }
+      }
+    }
+
+    function writeCell(r, c, value) {
+      const key = `${r},${c}`;
+      const letter = value.replace(/[^A-Za-z]/g, "").slice(-1).toUpperCase();
+      inputs[key].value = letter;
+      cellLetters[key].textContent = letter;
+      inputs[key].classList.remove("wrong");
+      if (letter) userCells[key] = letter;
+      else delete userCells[key];
+      persist();
+      if (letter) advanceFrom(r, c, dir, false);
+    }
+
+    function eraseLetter() {
+      const current = inputs[`${ar},${ac}`];
+      if (current.value) {
+        writeCell(ar, ac, "");
+        return;
+      }
+      const dr = dir === "down" ? -1 : 0;
+      const dc = dir === "across" ? -1 : 0;
+      let r = ar + dr;
+      let c = ac + dc;
+      while (r >= 0 && r < H && c >= 0 && c < W) {
+        if (Eng.isWhite(rows, r, c)) {
+          focusCell(r, c);
+          writeCell(r, c, "");
+          return;
+        }
+        r += dr;
+        c += dc;
+      }
+    }
+
+    function moveWord(step) {
+      const entries = dir === "across" ? data.across : data.down;
+      if (!entries.length) return;
+      const m = cellMap[ar][ac];
+      const current = dir === "across" ? m.ai : m.di;
+      const order = entries.map((entry, index) => ({ number: entry.pub, index }))
+        .sort((a, b) => a.number - b.number);
+      const position = order.findIndex((entry) => entry.index === current);
+      selectWord(dir, order[(position + step + order.length) % order.length].index);
+    }
+
+    function revealWithin(container, element) {
+      if (!container.clientWidth) return;
+      const bounds = container.getBoundingClientRect();
+      const cell = element.getBoundingClientRect();
+      const left = bounds.left + container.clientLeft;
+      const top = bounds.top + container.clientTop;
+      if (cell.left < left) container.scrollLeft += cell.left - left;
+      else if (cell.right > left + container.clientWidth) container.scrollLeft += cell.right - left - container.clientWidth;
+      if (cell.top < top) container.scrollTop += cell.top - top;
+      else if (cell.bottom > top + container.clientHeight) container.scrollTop += cell.bottom - top - container.clientHeight;
+    }
+
+    function updatePreview() {
+      for (const { r, c, button } of previewCells) {
+        button.textContent = userCells[`${r},${c}`] || "·";
+        button.setAttribute("aria-pressed", String(r === ar && c === ac));
+        const wrong = inputs[`${r},${c}`].classList.contains("wrong");
+        if (wrong) button.classList.add("wrong");
+        else button.classList.remove("wrong");
+        button.setAttribute("aria-invalid", String(wrong));
+        if (r === ar && c === ac) revealWithin(wordPreview, button);
+      }
+      if (previewCells.length) {
+        const entry = currentEntries()[0];
+        const clue = (entry.type === "across" ? data.across : data.down)[entry.idx];
+        const position = previewCells.findIndex((cell) => cell.r === ar && cell.c === ac) + 1;
+        keyboardCaption.textContent = `${entry.type === "across" ? "Across" : "Down"} ${clue.pub} · Letter ${position} of ${previewCells.length}`;
+      }
     }
 
     function advanceFrom(r, c, d, back) {
@@ -174,6 +263,7 @@
     table.setAttribute("role", "grid");
     table.setAttribute("aria-label", "Crossword puzzle");
     table.style.setProperty("--grid-columns", String(W));
+    table.style.setProperty("--grid-rows", String(H));
 
     for (let r = 0; r < H; r++) {
       const tr = document.createElement("tr");
@@ -207,41 +297,26 @@
         inp.setAttribute("aria-label", `Row ${r + 1} column ${c + 1}`);
         inp.setAttribute("aria-describedby", "hint-basic grid-help");
         inp.autocomplete = "off";
+        inp.setAttribute("autocapitalize", "characters");
+        inp.setAttribute("autocorrect", "off");
         inp.spellcheck = false;
+        inp.readOnly = touchMode;
+        inp.inputMode = touchMode ? "none" : "text";
         const key = `${r},${c}`;
         inputs[key] = inp;
         inp.value = (userCells[key] || "").toUpperCase();
         inp.addEventListener("input", () => {
-          let v = inp.value.replace(/[^A-Za-z]/g, "").slice(-1).toUpperCase();
-          inp.value = v;
-          if (v) userCells[key] = v;
-          else delete userCells[key];
-          inp.classList.remove("wrong");
-          persist();
-          if (v) advanceFrom(r, c, dir, false);
+          writeCell(r, c, inp.value);
         });
         inp.addEventListener("keydown", (ev) => {
-          if (ev.key === "Backspace" && !inp.value) {
+          if (touchMode && /^[a-z]$/i.test(ev.key) && !ev.ctrlKey && !ev.metaKey && !ev.altKey) {
             ev.preventDefault();
-            const step =
-              dir === "across" ? { dr: 0, dc: -1 } : { dr: -1, dc: 0 };
-            let pr = r + step.dr;
-            let pc = c + step.dc;
-            while (pr >= 0 && pr < H && pc >= 0 && pc < W) {
-              if (Eng.isWhite(rows, pr, pc)) {
-                const pk = `${pr},${pc}`;
-                if (inputs[pk]) {
-                  inputs[pk].value = "";
-                  delete userCells[pk];
-                  inputs[pk].classList.remove("wrong");
-                }
-                focusCell(pr, pc);
-                persist();
-                return;
-              }
-              pr += step.dr;
-              pc += step.dc;
-            }
+            writeCell(r, c, ev.key);
+            return;
+          }
+          if (ev.key === "Backspace") {
+            ev.preventDefault();
+            eraseLetter();
             return;
           }
           if (ev.key === "ArrowRight") {
@@ -279,13 +354,41 @@
           setDirPrefer(dir);
           updateChrome();
         });
-        inp.addEventListener("click", () => inp.select());
-        td.appendChild(inp);
+        inp.addEventListener("click", () => { if (!touchMode) inp.select(); });
+        inp.addEventListener("pointerdown", () => {
+          if (touchMode) setKeyboardCollapsed(false);
+        });
+        const displayedLetter = document.createElement("span");
+        displayedLetter.className = "cell-letter";
+        displayedLetter.setAttribute("aria-hidden", "true");
+        displayedLetter.textContent = inp.value;
+        cellLetters[key] = displayedLetter;
+        td.append(inp, displayedLetter);
         tr.appendChild(td);
       }
       table.appendChild(tr);
     }
     gridWrap.appendChild(table);
+
+    const gridTools = document.createElement("div");
+    gridTools.className = "grid-tools";
+    const zoomButton = document.createElement("button");
+    zoomButton.type = "button";
+    zoomButton.textContent = "Zoom grid";
+    zoomButton.setAttribute("aria-pressed", "false");
+    zoomButton.addEventListener("click", () => {
+      const zoomed = !gridWrap.classList.contains("zoomed");
+      if (zoomed) gridWrap.classList.add("zoomed");
+      else gridWrap.classList.remove("zoomed");
+      zoomButton.textContent = zoomed ? "Fit grid" : "Zoom grid";
+      zoomButton.setAttribute("aria-pressed", String(zoomed));
+      revealWithin(gridWrap, inputs[`${ar},${ac}`].parentElement);
+    });
+    const cluesButton = document.createElement("button");
+    cluesButton.type = "button";
+    cluesButton.textContent = "All clues ↓";
+    cluesButton.addEventListener("click", () => cluePanels.scrollIntoView({ block: "start" }));
+    gridTools.append(zoomButton, cluesButton);
 
     const toolbar = document.createElement("div");
     toolbar.className = "toolbar";
@@ -334,8 +437,10 @@
       userCells = {};
       for (const k of Object.keys(inputs)) {
         inputs[k].value = "";
+        cellLetters[k].textContent = "";
         inputs[k].classList.remove("wrong");
       }
+      updatePreview();
       Prog.clearProgress(data.id, data.progressRevision);
       persist();
     });
@@ -364,7 +469,22 @@
       directionButtons[d] = button;
       directions.appendChild(button);
     }
-    hintBox.appendChild(directions);
+    const navigation = document.createElement("div");
+    navigation.className = "clue-navigation";
+    const previousClue = document.createElement("button");
+    previousClue.type = "button";
+    previousClue.className = "word-nav";
+    previousClue.textContent = "‹";
+    previousClue.setAttribute("aria-label", "Previous clue");
+    previousClue.addEventListener("click", () => moveWord(-1));
+    const nextClue = document.createElement("button");
+    nextClue.type = "button";
+    nextClue.className = "word-nav";
+    nextClue.textContent = "›";
+    nextClue.setAttribute("aria-label", "Next clue");
+    nextClue.addEventListener("click", () => moveWord(1));
+    navigation.append(previousClue, directions, nextClue);
+    hintBox.appendChild(navigation);
     const hb = document.createElement("div");
     hb.id = "hint-basic";
     const he = document.createElement("div");
@@ -372,7 +492,17 @@
     const lookupHelp = document.createElement("p");
     lookupHelp.className = "lookup-help muted";
     lookupHelp.textContent = "Click any clue word to look up its meaning on Google.";
-    hintBox.append(hb, lookupHelp, he);
+    const wordPreview = document.createElement("div");
+    wordPreview.className = "word-preview";
+    wordPreview.setAttribute("role", "group");
+    wordPreview.setAttribute("aria-label", "Active word letters");
+    const hintExtras = document.createElement("details");
+    hintExtras.className = "hint-extras";
+    hintExtras.open = true;
+    const hintSummary = document.createElement("summary");
+    hintSummary.textContent = "Hints & answer";
+    hintExtras.append(hintSummary, lookupHelp, he);
+    hintBox.append(hb, wordPreview, hintExtras);
 
     const cluePanels = document.createElement("div");
     cluePanels.className = "clue-panels";
@@ -432,13 +562,80 @@
     const gridPanel = document.createElement("section");
     gridPanel.className = "grid-panel";
     gridPanel.setAttribute("aria-label", "Puzzle grid and controls");
-    gridPanel.append(gridWrap, toolbar);
+    gridPanel.append(gridTools, gridWrap, toolbar);
     main.append(gridPanel, hintBox, cluePanels);
     cluePanels.append(cluesAc, cluesDn);
 
     wrap.appendChild(main);
+    const keyboard = document.createElement("section");
+    keyboard.className = "touch-keyboard";
+    keyboard.setAttribute("aria-label", "Crossword keyboard");
+    const keyboardTop = document.createElement("div");
+    keyboardTop.className = "keyboard-top";
+    const keyboardCaption = document.createElement("span");
+    const keyboardToggle = document.createElement("button");
+    keyboardToggle.type = "button";
+    keyboardToggle.addEventListener("click", () => setKeyboardCollapsed(!keyboard.classList.contains("collapsed")));
+    keyboardTop.append(keyboardCaption, keyboardToggle);
+    const keyboardRows = document.createElement("div");
+    keyboardRows.className = "keyboard-rows";
+    for (const letters of ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"]) {
+      const row = document.createElement("div");
+      row.className = "keyboard-row";
+      const keys = [...letters];
+      if (letters === "ZXCVBNM") keys.push("Backspace", "Next");
+      for (const letter of keys) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "keyboard-key" + (letter.length > 1 ? " keyboard-action" : "");
+        button.setAttribute("data-key", letter);
+        button.textContent = letter === "Backspace" ? "⌫" : letter === "Next" ? "Next →" : letter;
+        button.setAttribute("aria-label", letter === "Backspace" ? "Delete letter" : letter === "Next" ? "Next clue" : letter);
+        button.addEventListener("pointerdown", (ev) => ev.preventDefault());
+        button.addEventListener("click", () => {
+          focusCell(ar, ac);
+          if (letter === "Backspace") eraseLetter();
+          else if (letter === "Next") moveWord(1);
+          else writeCell(ar, ac, letter);
+        });
+        row.appendChild(button);
+      }
+      keyboardRows.appendChild(row);
+    }
+    keyboard.append(keyboardTop, keyboardRows);
+    wrap.appendChild(keyboard);
     if (sourceReference) wrap.appendChild(sourceReference);
     rootEl.appendChild(wrap);
+
+    function setKeyboardCollapsed(collapsed) {
+      if (collapsed) {
+        keyboard.classList.add("collapsed");
+        wrap.classList.add("keyboard-collapsed");
+      } else {
+        keyboard.classList.remove("collapsed");
+        wrap.classList.remove("keyboard-collapsed");
+      }
+      keyboardToggle.textContent = collapsed ? "Show keyboard" : "Hide keyboard";
+      keyboardToggle.setAttribute("aria-expanded", String(!collapsed));
+    }
+
+    function applyTouchLayout() {
+      touchMode = Boolean(touchLayout?.matches);
+      if (touchMode) wrap.classList.add("touch-mode");
+      else wrap.classList.remove("touch-mode");
+      keyboard.hidden = !touchMode;
+      hintExtras.open = !touchMode;
+      keyboardHelp.textContent = touchMode
+        ? "Tap a square or a letter above the grid, then use the crossword keyboard. Use Across or Down to switch direction."
+        : "Double-click a square or press Space to switch direction. Arrow keys move; Tab leaves the grid.";
+      for (const input of Object.values(inputs)) {
+        input.readOnly = touchMode;
+        input.inputMode = touchMode ? "none" : "text";
+      }
+      setKeyboardCollapsed(false);
+    }
+    applyTouchLayout();
+    touchLayout?.addEventListener?.("change", applyTouchLayout);
 
     function currentEntries() {
       const m = cellMap[ar][ac];
@@ -475,7 +672,10 @@
         const m = cellMap[ar][ac];
         directionButtons[d].disabled = (d === "across" ? m.ai : m.di) < 0;
       }
-      if (wordKey === renderedWord) return;
+      if (wordKey === renderedWord) {
+        updatePreview();
+        return;
+      }
       renderedWord = wordKey;
       for (const input of highlightedCells) input.parentElement.classList.remove("word-active");
       highlightedCells = [];
@@ -486,6 +686,8 @@
       });
       hb.innerHTML = "";
       he.innerHTML = "";
+      wordPreview.innerHTML = "";
+      previewCells = [];
 
       if (!entries.length) return;
 
@@ -510,6 +712,16 @@
           const input = inputs[`${r},${c}`];
           input.parentElement.classList.add("word-active");
           highlightedCells.push(input);
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "preview-letter";
+          button.setAttribute("aria-label", `Select letter ${k + 1} of ${e.type === "across" ? "Across" : "Down"} ${entry.pub}`);
+          button.addEventListener("click", () => {
+            if (touchMode) setKeyboardCollapsed(false);
+            focusCell(r, c);
+          });
+          previewCells.push({ r, c, button });
+          wordPreview.appendChild(button);
         }
         h3.textContent = `${e.type === "across" ? "Across" : "Down"} ${entry.pub} (${word.len} letters)`;
         hb.appendChild(h3);
@@ -553,6 +765,7 @@
           he.appendChild(reveal);
         }
       });
+      updatePreview();
     }
 
     const firstRow = rows.findIndex((row) => row.includes("."));
