@@ -630,7 +630,7 @@ a:focus-visible {
     max-height: 48vh;
     max-height: 48dvh;
     overflow: auto;
-    padding: 0.65rem;
+    padding: 0.5rem;
     border-radius: 10px;
     box-shadow: 0 3px 12px #263b2c16;
   }
@@ -643,18 +643,21 @@ a:focus-visible {
     display: flex;
     align-items: center;
     gap: 0.4rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
   }
 
   .clue-navigation .direction-switch {
     flex: 1;
     margin: 0;
-    padding: 0.15rem;
+    padding: 0.075rem;
   }
 
   .direction-switch button,
   .word-nav {
-    min-height: 2.75rem;
+    min-height: 1.375rem;
+    height: 1.375rem;
+    padding: 0 0.4rem;
+    line-height: 1;
   }
 
   .word-nav {
@@ -666,7 +669,7 @@ a:focus-visible {
     border-radius: 8px;
     background: #fff;
     color: var(--accent);
-    font-size: 1.75rem;
+    font-size: 1.25rem;
     cursor: pointer;
   }
 
@@ -715,15 +718,38 @@ a:focus-visible {
 
   .hint-extras > summary {
     display: list-item;
-    min-height: 2.5rem;
-    padding: 0.65rem 0.15rem 0.25rem;
+    min-height: 1.5rem;
+    padding: 0.25rem 0.15rem 0.15rem;
     color: var(--accent);
-    font: 600 0.8rem system-ui, sans-serif;
+    font: 600 0.8rem / 1.2 system-ui, sans-serif;
     cursor: pointer;
   }
 
   .hint-extras[open] > summary {
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .hint-extras .lookup-help {
+    margin-bottom: 0.4rem;
+    line-height: 1.25;
+  }
+
+  .hint-extras .ext-hint {
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    line-height: 1.3;
+  }
+
+  .hint-extras .ext-hint summary {
+    padding: 0.4rem 0.6rem;
+  }
+
+  .hint-extras .ext-hint p {
+    padding: 0 0.6rem 0.5rem;
+  }
+
+  .hint-extras .answer-reveal {
+    margin-top: 0.5rem;
   }
 
   .grid-panel {
