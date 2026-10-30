@@ -1,0 +1,34 @@
+{
+  "puzzles": [
+    {
+      "id": "jump-scares-2026-10-29",
+      "title": "Jump Scares",
+      "author": "Mike Shenk",
+      "date": "2026-10-29",
+      "href": "puzzles/jump-scares-2026-10-29.html",
+      "screenshot": "screenshots/jump-scares-2026-10-29.png",
+      "whiteCellCount": 189,
+      "progressRevision": 1
+    },
+    {
+      "id": "set-aside-2026-10-28",
+      "title": "Set a Side",
+      "author": "Christopher Youngs",
+      "date": "2026-10-28",
+      "href": "puzzles/set-aside-2026-10-28.html",
+      "screenshot": "screenshots/set-aside-2026-10-28.png",
+      "whiteCellCount": 191,
+      "progressRevision": 1
+    },
+    {
+      "id": "final-assessment-2026-04-12",
+      "title": "Final Assessment",
+      "author": "Randolph Ross",
+      "date": "2026-04-11",
+      "href": "puzzles/final-assessment-2026-04-12.html",
+      "screenshot": "screenshots/Screenshot 2026-04-12 at 4.48.05 PM.png",
+      "whiteCellCount": 363,
+      "progressRevision": 2
+    }
+  ]
+}

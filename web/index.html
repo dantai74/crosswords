@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Crossword puzzles</title>
+    <link rel="stylesheet" href="styles.css?v=20261030-8" />
+  </head>
+  <body>
+    <header class="index-header">
+      <h1>Crossword puzzles</h1>
+      <p>
+        Open a puzzle to solve in the browser. Progress is stored locally in this
+        browser (localStorage). Add new rows to
+        <code>manifest.json</code> and ship a matching
+        <code>puzzles/&lt;slug&gt;.html</code> plus data file whenever you drop
+        in a new screenshot.
+      </p>
+    </header>
+
+    <table class="puzzle-table" aria-label="Puzzles and progress">
+      <thead>
+        <tr>
+          <th scope="col">Puzzle</th>
+          <th scope="col" class="pct">Progress</th>
+          <th scope="col">Updated</th>
+        </tr>
+      </thead>
+      <tbody id="puzzle-rows"></tbody>
+    </table>
+
+    <p class="muted" style="margin-top: 1.5rem; max-width: 42rem">
+      Run <code>make</code> from the project folder to open your crossword library.
+    </p>
+
+    <script src="shared/progress.js?v=20261030-8"></script>
+    <script>
+      const tbody = document.getElementById("puzzle-rows");
+
+      function fmtDate(ts) {
+        if (!ts) return "—";
+        try {
+          return new Date(ts).toLocaleString();
+        } catch {
+          return "—";
+        }
+      }
+
+      function render(rows) {
+        tbody.innerHTML = "";
+        for (const p of rows) {
+          const st = window.CrosswordProgress.statsForPuzzle(p);
+          const tr = document.createElement("tr");
+          const pct =
+            st.total > 0
+              ? `<div class="bar" aria-hidden="true"><span style="width:${st.percent}%"></span></div>${st.filled} / ${st.total} (${st.percent}%)`
+              : "—";
+          let correct = "";
+          if (st.checkable != null && st.checkable > 0) {
+            correct = `<div class="meta">${st.correct ?? 0} correct of ${st.checkable} checkable</div>`;
+          }
+          tr.innerHTML = `
+            <td>
+              <a href="${escapeHtml(p.href)}">${escapeHtml(p.title)}</a>
+              <div class="meta">${escapeHtml(p.author || "")}${
+            p.date ? " · " + escapeHtml(p.date) : ""
+          }</div>
+            </td>
+            <td class="pct">${pct}${correct}</td>
+            <td>${fmtDate(st.updatedAt)}</td>
+          `;
+          tbody.appendChild(tr);
+        }
+      }
+
+      function escapeHtml(s) {
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function validateManifest(data) {
+        if (!data || !Array.isArray(data.puzzles)) {
+          throw new Error("Manifest must contain a puzzles array.");
+        }
+        const ids = new Set();
+        for (const puzzle of data.puzzles) {
+          if (!puzzle || typeof puzzle.id !== "string" || !puzzle.id.trim() ||
+              ids.has(puzzle.id) || typeof puzzle.title !== "string" || !puzzle.title.trim() ||
+              typeof puzzle.href !== "string" ||
+              !/^puzzles\/[a-z0-9-]+\.html$/.test(puzzle.href) ||
+              !Number.isSafeInteger(puzzle.whiteCellCount) || puzzle.whiteCellCount <= 0 ||
+              (puzzle.progressRevision !== undefined &&
+                (!Number.isSafeInteger(puzzle.progressRevision) || puzzle.progressRevision <= 0)) ||
+              (puzzle.author !== undefined && typeof puzzle.author !== "string") ||
+              (puzzle.date !== undefined && typeof puzzle.date !== "string")) {
+            throw new Error("Manifest contains an invalid or duplicate puzzle entry.");
+          }
+          ids.add(puzzle.id);
+        }
+        return data.puzzles;
+      }
+
+      let loadVersion = 0;
+      async function load() {
+        const version = ++loadVersion;
+        try {
+          const res = await fetch("manifest.json", { cache: "no-store" });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const rows = validateManifest(await res.json());
+          if (version !== loadVersion) return;
+          render(rows);
+        } catch (err) {
+          if (version !== loadVersion) return;
+          tbody.innerHTML = "";
+          const row = document.createElement("tr");
+          const cell = document.createElement("td");
+          cell.colSpan = 3;
+          const message = document.createElement("p");
+          message.setAttribute("role", "alert");
+          message.textContent = "Could not load the puzzle list. " + err.message;
+          const retry = document.createElement("button");
+          retry.type = "button";
+          retry.textContent = "Retry";
+          retry.addEventListener("click", load);
+          cell.append(message, retry);
+          row.appendChild(cell);
+          tbody.appendChild(row);
+        }
+      }
+
+      load();
+      window.addEventListener("crossword-progress", () => load());
+      window.addEventListener("storage", (ev) => {
+        if (ev.key && ev.key.startsWith("crossword.v1.progress.")) load();
+      });
+    </script>
+  </body>
+</html>
