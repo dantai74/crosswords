@@ -6,7 +6,7 @@ Browser-based crossword puzzles with **local progress**, **tiered hints** (publi
 
 **An LLM is required for this project's current workflow for adding puzzles.** Use an image-capable LLM coding assistant with access to this repository to read screenshots, transcribe grids and clues, verify or reconstruct answers, write useful hints, and produce the puzzle files. This preparation happens through the assistant; there is no automatic screenshot importer in the app.
 
-Once prepared, puzzles run locally as static HTML, JavaScript, and CSS. Playing existing puzzles requires no LLM connection or API key. Python serves the files, and the browser handles interaction and saved progress.
+Once prepared, puzzles run as static HTML, JavaScript, and CSS. Playing existing puzzles requires no LLM connection or API key. Python serves local files; GitHub Pages serves the published version. The browser handles interaction and saved progress.
 
 ## Quick start
 
@@ -34,6 +34,27 @@ Click any blue, underlined word in the active clue or either clue list, such as 
 
 If browser storage is unavailable or full, a status message appears and you can keep solving in memory. Those changes may be lost when you leave the page.
 
+## Publish with GitHub Pages
+
+The deployment workflow is [`.github/workflows/pages.yml`](.github/workflows/pages.yml). After these changes are committed and pushed, enable it once:
+
+1. Open the repository's [Pages settings](https://github.com/dantai74/crosswords/settings/pages).
+2. Under **Build and deployment → Source**, choose **GitHub Actions**.
+3. Push to `main`, or open **Actions → Deploy GitHub Pages → Run workflow**, selecting `main`.
+4. Wait for the workflow to finish, then open **https://dantai74.github.io/crosswords/**.
+
+The workflow runs `make test`, packages the static files, and deploys only after validation succeeds. Pull requests run validation and packaging without publishing; pushes to `main` publish updates automatically. No deployment secret or external server is needed; the workflow uses GitHub's built-in token. See [GitHub's workflow documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
+
+To inspect the same deployable package locally, run:
+
+```bash
+make pages
+```
+
+This recreates the ignored `_site/` directory with the contents of `web/` and real copies of `screenshots/`. It replaces the local screenshots symlink, removes `.DS_Store`, and adds `.nojekyll`. The artifact's `index.html` belongs at its root; GitHub supplies the `/crosswords/` URL prefix. A production build does not run `make` or Python on visitors' devices.
+
+Family members each get their own progress when using separate devices or browsers. Progress remains local to each browser; the site currently has no sign-in, cloud synchronization, or progress export/import. Existing localhost progress does not transfer automatically to the GitHub Pages domain. On a shared browser, people share one progress record per puzzle.
+
 ## Validation and tests
 
 With Node.js installed, run the regression suite from the repository root:
@@ -42,7 +63,7 @@ With Node.js installed, run the regression suite from the repository root:
 make test
 ```
 
-The suite checks puzzle data against a source screenshot fixture, complete crossing answers, hint coverage and repeated placeholders, clue numbering, saved-progress sanitization and revisions, storage failures, and index loading/retry behavior. DOM fixtures exercise shell mounting, sorted clue selection, double-click switching, and hint persistence. No npm dependencies are required.
+The suite checks puzzle data against a source screenshot fixture, complete crossing answers, hint coverage and repeated placeholders, clue numbering, saved-progress sanitization and revisions, storage failures, and index loading/retry behavior. DOM fixtures exercise shell mounting, sorted clue selection, double-click switching, and hint persistence. Deployment tests build a standalone package and verify that page links, scripts, and screenshots resolve under `/crosswords/`, with no symlinks. No npm dependencies are required.
 
 For UI changes, also serve `web/` and check keyboard entry and navigation, Tab/Shift+Tab leaving the grid, double-click and Space switching direction, hint expansion while typing, progress after reload, and the layout above and below 1160px viewport width. The clue lists become two columns at 640px; check horizontal grid scrolling on phones.
 

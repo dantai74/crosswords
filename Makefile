@@ -41,10 +41,19 @@ with http.server.ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), handler) a
 endef
 export CROSSWORD_SERVER_CODE
 
-.PHONY: serve test
+.PHONY: serve test pages
 
 serve:
 	@$(PYTHON) -c "$$CROSSWORD_SERVER_CODE" '$(PORT)'
 
 test:
 	node --test tests/*.test.cjs
+
+pages:
+	rm -rf _site
+	mkdir -p _site
+	cp -R web/. _site/
+	rm -rf _site/screenshots
+	cp -R screenshots _site/screenshots
+	find _site -name .DS_Store -type f -delete
+	touch _site/.nojekyll

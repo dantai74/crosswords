@@ -49,6 +49,14 @@ crosswords/
 - **Run `make`** from the repository root. Its local server mounts `web/` at `http://localhost:8000/crosswords/`, disables browser caching, and opens Chrome. The root URL and legacy paths redirect into `/crosswords/`. Opening `file://` is unsuitable because the index fetches its manifest over HTTP.
 - **Image paths:** Puzzle pages reference screenshots as `../screenshots/...` from `puzzles/*.html`. Under the mount this resolves to `/crosswords/screenshots/...`, served from `web/screenshots/...` — use a symlink or copy from repo `screenshots/`.
 
+## GitHub Pages deployment
+
+- `.github/workflows/pages.yml` validates and packages on pushes and pull requests to `main`, plus manual dispatch. Only main-branch pushes/manual runs deploy. The deploy job depends on the build and uses the `github-pages` environment with `pages: write` and `id-token: write` permissions.
+- One-time repository setup: **Settings → Pages → Build and deployment → Source → GitHub Actions**. The expected site address is `https://dantai74.github.io/crosswords/`.
+- `make pages` recreates `_site/` from `web/`, replacing its screenshot symlink with copied images from `screenshots/`, dropping `.DS_Store`, and adding `.nojekyll`. `_site/` is generated and ignored by Git. Do not put another `crosswords/` directory inside the artifact: GitHub provides that path prefix.
+- The hosted player is entirely static. It uses browser-local progress; separate browsers/devices have separate saves. Localhost saves do not automatically migrate to the production origin. Account-based synchronization and export/import are not implemented.
+- `tests/pages.test.cjs` packages the app in a temporary workspace, checks for symlinks, resolves page and screenshot URLs against the production subdirectory, and verifies packaging also works without the local screenshot symlink.
+
 ## Data contract: `window.PUZZLE_DATA`
 
 Defined in each `puzzles/<slug>.data.js`.
