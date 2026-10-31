@@ -324,12 +324,13 @@ test("small touch screens use a dedicated keyboard and collapsed hints for every
     assert.ok(root.querySelectorAll("input").every((input) => input.readOnly && input.inputMode === "none"));
     assert.equal(document.activeElement.focusOptions.preventScroll, true);
     assert.equal(root.querySelectorAll(".keyboard-key").length, 28);
-    const firstWord = root.querySelector("#hint-basic h3").textContent;
-    assert.equal(root.querySelectorAll(".preview-letter").length, Number(firstWord.match(/\((\d+) letters\)/)[1]));
+    assert.equal(root.querySelector(".hint-box input"), null);
+    assert.equal(root.querySelector(".word-preview"), null);
+    assert.match(root.querySelector(".keyboard-top span").textContent, /Letter 1 of /);
   }
 });
 
-test("touch letter keys save and advance, with backspace and a large word preview", () => {
+test("touch letter keys edit the grid, save and advance, with backspace", () => {
   const { root, document } = mount(undefined, undefined, { touch: true });
   const key = root.querySelector('.keyboard-key[data-key="C"]');
   const press = event("pointerdown");
@@ -337,8 +338,7 @@ test("touch letter keys save and advance, with backspace and a large word previe
   assert.equal(press.defaultPrevented, true);
   key.dispatchEvent(event("click"));
   assert.equal(root.querySelectorAll(".cell-letter")[0].textContent, "C");
-  assert.equal(root.querySelectorAll(".preview-letter")[0].textContent, "C");
-  assert.equal(root.querySelectorAll(".preview-letter")[1].getAttribute("aria-pressed"), "true");
+  assert.equal(root.querySelectorAll("input")[0].value, "C");
   assert.match(root.querySelector(".puzzle-progress").textContent, /^1 \/ 363/);
   assert.equal(document.activeElement.dataset.c, "1");
   root.querySelector('.keyboard-key[data-key="Backspace"]').dispatchEvent(event("click"));
@@ -346,7 +346,7 @@ test("touch letter keys save and advance, with backspace and a large word previe
   assert.equal(document.activeElement.value, "");
   assert.match(root.querySelector(".puzzle-progress").textContent, /^0 \/ 363/);
   assert.equal(root.querySelectorAll(".cell-letter")[0].textContent, "");
-  root.querySelectorAll(".preview-letter")[4].dispatchEvent(event("click"));
+  root.querySelectorAll("input")[4].focus();
   assert.equal(document.activeElement.dataset.c, "4");
   assert.match(root.querySelector(".keyboard-top span").textContent, /Letter 5 of 5/);
 });
@@ -410,13 +410,12 @@ test("touch navigation keeps the active square above the fixed keyboard", () => 
   assert.equal(scrolls.at(-1).top, 108);
 });
 
-test("phone word previews show checked mistakes and clear them after editing", () => {
+test("phone grid mistakes clear after editing the selected square", () => {
   const { root } = mount(undefined, undefined, { touch: true });
   root.querySelector('.keyboard-key[data-key="Z"]').dispatchEvent(event("click"));
   root.querySelector(".toolbar button").dispatchEvent(event("click"));
-  assert.equal(root.querySelectorAll(".preview-letter")[0].classList.contains("wrong"), true);
-  assert.equal(root.querySelectorAll(".preview-letter")[0].getAttribute("aria-invalid"), "true");
-  root.querySelectorAll(".preview-letter")[0].dispatchEvent(event("click"));
+  assert.equal(root.querySelectorAll("input")[0].classList.contains("wrong"), true);
+  root.querySelectorAll("input")[0].focus();
   root.querySelector('.keyboard-key[data-key="C"]').dispatchEvent(event("click"));
-  assert.equal(root.querySelectorAll(".preview-letter")[0].classList.contains("wrong"), false);
+  assert.equal(root.querySelectorAll("input")[0].classList.contains("wrong"), false);
 });

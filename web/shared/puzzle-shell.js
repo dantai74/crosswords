@@ -24,7 +24,6 @@
     let userCells = {};
     let renderedWord = "";
     let highlightedCells = [];
-    let previewCells = [];
     const touchLayout = global.matchMedia?.("(max-width: 760px) and (pointer: coarse), (max-height: 520px) and (pointer: coarse)");
     let touchMode = Boolean(touchLayout?.matches);
     const progressLabel = document.createElement("p");
@@ -39,7 +38,7 @@
 
     function persist() {
       const filled = Prog.countFilledCells(userCells, rows);
-      updatePreview();
+      updateKeyboardCaption();
       progressLabel.textContent = `${filled} / ${totalWhite} letters filled`;
       const cc = Eng.countCorrectCells(
         rows,
@@ -167,22 +166,13 @@
       else if (cell.bottom > top + container.clientHeight) container.scrollTop += cell.bottom - top - container.clientHeight;
     }
 
-    function updatePreview() {
-      for (const { r, c, button } of previewCells) {
-        button.textContent = userCells[`${r},${c}`] || "·";
-        button.setAttribute("aria-pressed", String(r === ar && c === ac));
-        const wrong = inputs[`${r},${c}`].classList.contains("wrong");
-        if (wrong) button.classList.add("wrong");
-        else button.classList.remove("wrong");
-        button.setAttribute("aria-invalid", String(wrong));
-        if (r === ar && c === ac) revealWithin(wordPreview, button);
-      }
-      if (previewCells.length) {
-        const entry = currentEntries()[0];
-        const clue = (entry.type === "across" ? data.across : data.down)[entry.idx];
-        const position = previewCells.findIndex((cell) => cell.r === ar && cell.c === ac) + 1;
-        keyboardCaption.textContent = `${entry.type === "across" ? "Across" : "Down"} ${clue.pub} · Letter ${position} of ${previewCells.length}`;
-      }
+    function updateKeyboardCaption() {
+      const entry = currentEntries()[0];
+      if (!entry) return;
+      const clue = (entry.type === "across" ? data.across : data.down)[entry.idx];
+      const word = (entry.type === "across" ? across : down)[entry.idx];
+      const position = (entry.type === "across" ? ac - word.c : ar - word.r) + 1;
+      keyboardCaption.textContent = `${entry.type === "across" ? "Across" : "Down"} ${clue.pub} · Letter ${position} of ${word.len}`;
     }
 
     function advanceFrom(r, c, d, back) {
@@ -401,6 +391,7 @@
     checkBtn.type = "button";
     checkBtn.className = "primary-button";
     checkBtn.textContent = "Check known letters";
+    checkBtn.title = "Mark incorrect filled letters in red. Empty cells are left unchanged.";
     checkBtn.addEventListener("click", () => {
       let any = false;
       for (let r = 0; r < H; r++) {
@@ -440,7 +431,7 @@
         cellLetters[k].textContent = "";
         inputs[k].classList.remove("wrong");
       }
-      updatePreview();
+      updateKeyboardCaption();
       Prog.clearProgress(data.id, data.progressRevision);
       persist();
     });
@@ -492,17 +483,13 @@
     const lookupHelp = document.createElement("p");
     lookupHelp.className = "lookup-help muted";
     lookupHelp.textContent = "Click any clue word to look up its meaning on Google.";
-    const wordPreview = document.createElement("div");
-    wordPreview.className = "word-preview";
-    wordPreview.setAttribute("role", "group");
-    wordPreview.setAttribute("aria-label", "Active word letters");
     const hintExtras = document.createElement("details");
     hintExtras.className = "hint-extras";
     hintExtras.open = true;
     const hintSummary = document.createElement("summary");
     hintSummary.textContent = "Hints & answer";
     hintExtras.append(hintSummary, lookupHelp, he);
-    hintBox.append(hb, wordPreview, hintExtras);
+    hintBox.append(hb, hintExtras);
 
     const cluePanels = document.createElement("div");
     cluePanels.className = "clue-panels";
@@ -626,7 +613,7 @@
       keyboard.hidden = !touchMode;
       hintExtras.open = !touchMode;
       keyboardHelp.textContent = touchMode
-        ? "Tap a square or a letter above the grid, then use the crossword keyboard. Use Across or Down to switch direction."
+        ? "Tap a square in the grid, then use the crossword keyboard. Use Across or Down to switch direction."
         : "Double-click a square or press Space to switch direction. Arrow keys move; Tab leaves the grid.";
       for (const input of Object.values(inputs)) {
         input.readOnly = touchMode;
@@ -673,7 +660,7 @@
         directionButtons[d].disabled = (d === "across" ? m.ai : m.di) < 0;
       }
       if (wordKey === renderedWord) {
-        updatePreview();
+        updateKeyboardCaption();
         return;
       }
       renderedWord = wordKey;
@@ -686,8 +673,6 @@
       });
       hb.innerHTML = "";
       he.innerHTML = "";
-      wordPreview.innerHTML = "";
-      previewCells = [];
 
       if (!entries.length) return;
 
@@ -712,16 +697,6 @@
           const input = inputs[`${r},${c}`];
           input.parentElement.classList.add("word-active");
           highlightedCells.push(input);
-          const button = document.createElement("button");
-          button.type = "button";
-          button.className = "preview-letter";
-          button.setAttribute("aria-label", `Select letter ${k + 1} of ${e.type === "across" ? "Across" : "Down"} ${entry.pub}`);
-          button.addEventListener("click", () => {
-            if (touchMode) setKeyboardCollapsed(false);
-            focusCell(r, c);
-          });
-          previewCells.push({ r, c, button });
-          wordPreview.appendChild(button);
         }
         h3.textContent = `${e.type === "across" ? "Across" : "Down"} ${entry.pub} (${word.len} letters)`;
         hb.appendChild(h3);
@@ -765,7 +740,7 @@
           he.appendChild(reveal);
         }
       });
-      updatePreview();
+      updateKeyboardCaption();
     }
 
     const firstRow = rows.findIndex((row) => row.includes("."));

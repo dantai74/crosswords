@@ -39,10 +39,10 @@ If browser storage is unavailable or full, a status message appears and you can 
 Small touch screens automatically get a phone layout based on screen size and pointer capability. Desktop layout and physical-keyboard controls remain available as before.
 
 - **Grid fits the screen:** tap a square, or use **Zoom grid** for larger cells and pan around. **Fit grid** returns to the full-board view.
-- **Active clue stays close:** a compact panel above the board shows the clue and a larger strip of its letters. Tap a letter in that strip to choose the exact cell. Previous/next buttons navigate clues in numerical order.
+- **Active clue stays close:** a compact panel above the board shows the clue, direction controls, and hints. Select and enter letters directly in the grid. Previous/next buttons navigate clues in numerical order.
 - **Crossword keyboard:** letter keys fill and advance in your chosen direction; delete clears a letter, and **Next** moves to the next clue. It replaces the phone keyboard while solving, avoiding autocorrect and repeated keyboard popups. Connected physical keyboards still work.
 - **Hints on demand:** tap **Hints & answer** to expand the existing hint tiers and spoiler control. Across/Down buttons switch direction.
-- **More room when needed:** hide the crossword keyboard to read clues or the reference image; tapping a square or a letter in the word strip brings it back. **All clues** jumps to the numbered lists.
+- **More room when needed:** hide the crossword keyboard to read clues or the reference image; tapping a grid square brings it back. **All clues** jumps to the numbered lists.
 
 The puzzle library also becomes a list of cards on phones. Saved progress and Google meaning links work the same way as on desktop.
 
@@ -79,7 +79,7 @@ The suite checks puzzle data against a source screenshot fixture, complete cross
 
 For UI changes, also serve `web/` and check keyboard entry and navigation, Tab/Shift+Tab leaving the grid, double-click and Space switching direction, hint expansion while typing, progress after reload, and the desktop layout above and below 1160px viewport width. The desktop clue lists become two columns at 640px; small touch screens use the separate phone layout.
 
-For phone changes, check Safari on iPhone and Chrome on Android at narrow widths (including 320px and 390px), both grid sizes, portrait/landscape rotation, the fitted and zoomed grid, word-strip selection, delete/next, keyboard hiding, expanded hints, and returning from a Google lookup. Phone interaction tests use a DOM fixture; real-device visual and touch checks remain manual.
+For phone changes, check Safari on iPhone and Chrome on Android at narrow widths (including 320px and 390px), both grid sizes, portrait/landscape rotation, the fitted and zoomed grid, square selection, delete/next, keyboard hiding, expanded hints, and returning from a Google lookup. Phone interaction tests use a DOM fixture; real-device visual and touch checks remain manual.
 
 ## Project layout
 
@@ -132,6 +132,8 @@ Puzzle pages validate the grid, clue counts, answer lengths, and crossing answer
 ## Checking answers
 
 “Check known letters” only compares cells where the solution letter can be inferred from non-empty `answer` strings on entries. Fill in `answer` per word in the `.data.js` file as you obtain the key.
+
+The button marks incorrect filled cells red in the grid. It leaves empty cells alone and does not fill in answers. All currently bundled puzzles have complete solutions, so every filled cell can be checked. Correcting a letter removes its red marker; check again to verify the replacement.
 
 The bundled **Final Assessment** puzzle has a corrected 21×21 grid, all 138 entries, and a complete solution checked at every crossing. It was published April 11, 2026; April 12 in the filenames is the screenshot date. The corrected grid uses progress revision 2. Saves from the earlier incorrect grid remain under their original localStorage key, while the corrected grid starts fresh.
 

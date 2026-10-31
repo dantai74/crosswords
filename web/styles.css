@@ -523,7 +523,6 @@ a:focus-visible {
 
 .grid-tools,
 .cell-letter,
-.word-preview,
 .word-nav,
 .hint-extras > summary,
 .touch-keyboard {
@@ -685,37 +684,6 @@ a:focus-visible {
     overflow-wrap: anywhere;
   }
 
-  .word-preview {
-    display: flex;
-    position: relative;
-    gap: 3px;
-    padding: 2px;
-    overflow: auto;
-    scrollbar-width: none;
-  }
-
-  .preview-letter {
-    flex: 0 0 2rem;
-    height: 2.5rem;
-    border: 1px solid #cbd5c4;
-    border-radius: 5px;
-    padding: 0;
-    background: #f4f7ee;
-    color: var(--ink);
-    font: 600 1.1rem system-ui, sans-serif;
-  }
-
-  .preview-letter[aria-pressed="true"] {
-    border: 2px solid #9c7136;
-    background: #fff0cb;
-  }
-
-  .preview-letter.wrong {
-    border-color: var(--wrong);
-    background: #fdecea;
-    color: var(--wrong);
-  }
-
   .hint-extras > summary {
     display: list-item;
     min-height: 1.5rem;
@@ -763,17 +731,18 @@ a:focus-visible {
     display: flex;
     justify-content: space-between;
     gap: 0.5rem;
-    margin-bottom: 0.4rem;
+    margin-bottom: 0.25rem;
   }
 
   .grid-tools button {
-    min-height: 2.75rem;
+    min-height: 1.375rem;
+    height: 1.375rem;
     border: 1px solid #d6dbd1;
     border-radius: 7px;
-    padding: 0.5rem 0.85rem;
+    padding: 0 0.6rem;
     background: #fffefa;
     color: var(--accent);
-    font: 500 0.85rem system-ui, sans-serif;
+    font: 500 0.8rem / 1 system-ui, sans-serif;
   }
 
   .cross-grid {
@@ -830,14 +799,17 @@ a:focus-visible {
   }
 
   .toolbar {
-    margin: 0.75rem 0;
-    gap: 0.5rem;
+    margin: 0.4rem 0;
+    gap: 0.35rem;
   }
 
   .toolbar button {
     flex: 1;
-    min-height: 2.75rem;
-    padding: 0.6rem 0.4rem;
+    min-height: 1.375rem;
+    height: 1.375rem;
+    padding: 0 0.4rem;
+    font-size: 0.8rem;
+    line-height: 1;
   }
 
   #grid-help {
@@ -846,12 +818,29 @@ a:focus-visible {
 
   .clue-panels {
     grid-template-columns: minmax(0, 1fr);
-    gap: 0.75rem;
-    scroll-margin-top: 14rem;
+    gap: 0.5rem;
+    scroll-margin-top: 12rem;
   }
 
   .clues {
-    padding: 0.9rem;
+    padding: 0.6rem;
+  }
+
+  .clues h2 {
+    margin-bottom: 0.45rem;
+  }
+
+  .clue-help {
+    margin: 0 0 0.4rem;
+    font-size: 0.7rem;
+    line-height: 1.2;
+  }
+
+  .clue-row {
+    gap: 0.5rem;
+    padding: 0.25rem 0.3rem;
+    font-size: 0.875rem;
+    line-height: 1.25;
   }
 
   .clue-list {
@@ -859,12 +848,16 @@ a:focus-visible {
   }
 
   .clue-btn {
-    min-width: 2.75rem;
-    min-height: 2.75rem;
+    min-width: 2.25rem;
+    min-height: 1.375rem;
+    height: 1.375rem;
+    padding: 0 0.2rem;
+    font-size: 0.75rem;
+    line-height: 1;
   }
 
   .clue-word {
-    line-height: 1.8;
+    line-height: inherit;
   }
 
   .touch-keyboard {
