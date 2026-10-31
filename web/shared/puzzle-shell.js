@@ -769,11 +769,15 @@
       acrossCluesButton.hidden = touchMode;
       downCluesButton.hidden = touchMode;
       keyboard.hidden = !touchMode;
+      navigation.hidden = touchMode;
+      header.hidden = touchMode;
+      const pageNavigation = document.querySelector?.(".puzzle-nav");
+      if (pageNavigation) pageNavigation.hidden = touchMode;
       if (touchMode) {
         checkBtn.className = "keyboard-check";
         clearBtn.className = "keyboard-clear";
-        checkBtn.textContent = "✓ Check";
-        clearBtn.textContent = "Clear";
+        checkBtn.textContent = "✓";
+        clearBtn.innerHTML = '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"></path></svg>';
         keyboardTop.append(checkBtn, clearBtn, keyboardToggle);
         undoButton.className = "keyboard-undo keyboard-action";
         keyboardRows.children[keyboardRows.children.length - 1].appendChild(undoButton);

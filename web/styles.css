@@ -909,21 +909,37 @@ a:focus-visible {
   }
 
   .keyboard-top .keyboard-nav {
-    width: 2.25rem;
+    width: 4.5rem;
     flex: none;
     padding: 0;
-    border: 1px solid #c8cec2;
-    background: #fff;
-    font-size: 1.1rem;
+    border-color: #344e84;
+    background: #425f9a;
+    color: #fff;
+    font-size: 1.4rem;
     line-height: 1;
     text-decoration: none;
   }
 
   .keyboard-top .keyboard-direction {
-    flex: 1.3;
+    flex: 1;
+    padding-inline: 0.125rem;
+    font-size: 0.7rem;
     background: #eef0fb;
     border-color: #c4cbe3;
     color: #394b81;
+  }
+
+  .keyboard-top .keyboard-check,
+  .keyboard-top .keyboard-clear {
+    flex: none;
+    width: 2rem;
+    padding: 0;
+    font-size: 1.1rem;
+  }
+
+  .keyboard-clear svg {
+    display: block;
+    margin: auto;
   }
 
   .keyboard-top .keyboard-check {

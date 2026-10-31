@@ -523,7 +523,9 @@ test("Check and Clear move between phone keyboard and desktop toolbar without du
   assert.equal(check.parentElement, root.querySelector(".keyboard-top"));
   assert.equal(clear.parentElement, check.parentElement);
   assert.equal(root.querySelectorAll(".toolbar button").length, 0);
-  assert.equal(check.textContent, "✓ Check");
+  assert.equal(check.textContent, "✓");
+  assert.equal(clear.getAttribute("aria-label"), "Clear progress");
+  assert.ok(clear.querySelector("svg"));
   root.querySelector('.keyboard-key[data-key="Z"]').dispatchEvent(event("click"));
   check.dispatchEvent(event("click"));
   assert.equal(root.querySelectorAll("input")[0].classList.contains("wrong"), true);
@@ -656,4 +658,20 @@ test("switching to desktop closes the clue sheet and restores both lists below t
   assert.equal(root.querySelector(".clue-panels").parentElement, root.querySelector(".puzzle-main"));
   assert.ok(root.querySelectorAll(".clues").every((section) => !section.hidden));
   assert.equal(root.querySelector(".open-clues").hidden, true);
+});
+
+
+test("phone hides duplicate clue navigation and restores it on desktop", () => {
+  const { root, media } = mount(undefined, undefined, { touch: true });
+  const navigation = root.querySelector(".clue-navigation");
+  assert.equal(navigation.hidden, true);
+  assert.equal(root.querySelector(".puzzle-header").hidden, true);
+  assert.equal(root.querySelector(".keyboard-navigation").hidden, undefined);
+  media.matches = false;
+  media.change();
+  assert.equal(navigation.hidden, false);
+  assert.equal(root.querySelector(".puzzle-header").hidden, false);
+  media.matches = true;
+  media.change();
+  assert.equal(navigation.hidden, true);
 });
