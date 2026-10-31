@@ -33,7 +33,7 @@
           (typeof entry.answerExplanation === "string" && entry.answerExplanation.trim()),
           "answerExplanation must be a non-empty string");
         requireValid(entry.answer === undefined || entry.answer === "" ||
-          (typeof entry.answer === "string" && /^[A-Za-z]+$/.test(entry.answer) &&
+          (typeof entry.answer === "string" && /^[A-Za-z0-9]+$/.test(entry.answer) &&
             entry.answer.length === words[dir][i].len),
           dir + " " + entry.pub + " answer must match the slot length");
       });

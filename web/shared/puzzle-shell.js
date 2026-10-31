@@ -38,7 +38,6 @@
 
     function persist() {
       const filled = Prog.countFilledCells(userCells, rows);
-      updateKeyboardCaption();
       progressLabel.textContent = `${filled} / ${totalWhite} letters filled`;
       const cc = Eng.countCorrectCells(
         rows,
@@ -112,7 +111,7 @@
 
     function writeCell(r, c, value) {
       const key = `${r},${c}`;
-      const letter = value.replace(/[^A-Za-z]/g, "").slice(-1).toUpperCase();
+      const letter = value.replace(/[^A-Za-z0-9]/g, "").slice(-1).toUpperCase();
       inputs[key].value = letter;
       cellLetters[key].textContent = letter;
       inputs[key].classList.remove("wrong");
@@ -164,15 +163,6 @@
       else if (cell.right > left + container.clientWidth) container.scrollLeft += cell.right - left - container.clientWidth;
       if (cell.top < top) container.scrollTop += cell.top - top;
       else if (cell.bottom > top + container.clientHeight) container.scrollTop += cell.bottom - top - container.clientHeight;
-    }
-
-    function updateKeyboardCaption() {
-      const entry = currentEntries()[0];
-      if (!entry) return;
-      const clue = (entry.type === "across" ? data.across : data.down)[entry.idx];
-      const word = (entry.type === "across" ? across : down)[entry.idx];
-      const position = (entry.type === "across" ? ac - word.c : ar - word.r) + 1;
-      keyboardCaption.textContent = `${entry.type === "across" ? "Across" : "Down"} ${clue.pub} · Letter ${position} of ${word.len}`;
     }
 
     function advanceFrom(r, c, d, back) {
@@ -299,7 +289,7 @@
           writeCell(r, c, inp.value);
         });
         inp.addEventListener("keydown", (ev) => {
-          if (touchMode && /^[a-z]$/i.test(ev.key) && !ev.ctrlKey && !ev.metaKey && !ev.altKey) {
+          if (touchMode && /^[a-z0-9]$/i.test(ev.key) && !ev.ctrlKey && !ev.metaKey && !ev.altKey) {
             ev.preventDefault();
             writeCell(r, c, ev.key);
             return;
@@ -374,11 +364,15 @@
       zoomButton.setAttribute("aria-pressed", String(zoomed));
       revealWithin(gridWrap, inputs[`${ar},${ac}`].parentElement);
     });
-    const cluesButton = document.createElement("button");
-    cluesButton.type = "button";
-    cluesButton.textContent = "All clues ↓";
-    cluesButton.addEventListener("click", () => cluePanels.scrollIntoView({ block: "start" }));
-    gridTools.append(zoomButton, cluesButton);
+    const acrossCluesButton = document.createElement("button");
+    acrossCluesButton.type = "button";
+    acrossCluesButton.textContent = "All across clues ↓";
+    acrossCluesButton.addEventListener("click", () => cluesAc.scrollIntoView({ block: "start" }));
+    const downCluesButton = document.createElement("button");
+    downCluesButton.type = "button";
+    downCluesButton.textContent = "All down clues ↓";
+    downCluesButton.addEventListener("click", () => cluesDn.scrollIntoView({ block: "start" }));
+    gridTools.append(zoomButton, acrossCluesButton, downCluesButton);
 
     const toolbar = document.createElement("div");
     toolbar.className = "toolbar";
@@ -431,7 +425,6 @@
         cellLetters[k].textContent = "";
         inputs[k].classList.remove("wrong");
       }
-      updateKeyboardCaption();
       Prog.clearProgress(data.id, data.progressRevision);
       persist();
     });
@@ -442,6 +435,7 @@
 
     const hintBox = document.createElement("section");
     hintBox.className = "hint-box";
+    hintBox.setAttribute("aria-label", `Active clue for ${data.title}`);
     hintBox.innerHTML = "<h2>Active clue</h2>";
     const directions = document.createElement("div");
     directions.className = "direction-switch";
@@ -554,35 +548,58 @@
     cluePanels.append(cluesAc, cluesDn);
 
     wrap.appendChild(main);
+    const libraryLink = document.createElement("a");
+    libraryLink.className = "puzzle-library-link";
+    libraryLink.setAttribute("href", "../index.html");
+    libraryLink.textContent = "← All puzzles";
+    wrap.appendChild(libraryLink);
     const keyboard = document.createElement("section");
     keyboard.className = "touch-keyboard";
     keyboard.setAttribute("aria-label", "Crossword keyboard");
     const keyboardTop = document.createElement("div");
     keyboardTop.className = "keyboard-top";
-    const keyboardCaption = document.createElement("span");
+    const keyboardNavigation = document.createElement("div");
+    keyboardNavigation.className = "keyboard-navigation";
+    keyboardNavigation.setAttribute("role", "group");
+    keyboardNavigation.setAttribute("aria-label", "Clue navigation");
+    for (const [key, label, step] of [["Previous", "<", -1], ["Next", ">", 1]]) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "keyboard-nav";
+      button.textContent = label;
+      button.setAttribute("data-key", key);
+      button.setAttribute("aria-label", key + " clue");
+      button.addEventListener("pointerdown", (ev) => ev.preventDefault());
+      button.addEventListener("click", () => moveWord(step));
+      keyboardNavigation.appendChild(button);
+    }
     const keyboardToggle = document.createElement("button");
     keyboardToggle.type = "button";
+    keyboardToggle.className = "keyboard-toggle";
     keyboardToggle.addEventListener("click", () => setKeyboardCollapsed(!keyboard.classList.contains("collapsed")));
-    keyboardTop.append(keyboardCaption, keyboardToggle);
+    keyboardTop.append(keyboardNavigation, keyboardToggle);
     const keyboardRows = document.createElement("div");
     keyboardRows.className = "keyboard-rows";
     for (const letters of ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"]) {
       const row = document.createElement("div");
       row.className = "keyboard-row";
       const keys = [...letters];
-      if (letters === "ZXCVBNM") keys.push("Backspace", "Next");
+      if (letters === "ZXCVBNM") {
+        const digits = [...new Set([...data.across, ...data.down]
+          .flatMap((entry) => (entry.answer || "").match(/[0-9]/g) || []))].sort();
+        keys.push(...digits, "Backspace");
+      }
       for (const letter of keys) {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "keyboard-key" + (letter.length > 1 ? " keyboard-action" : "");
         button.setAttribute("data-key", letter);
-        button.textContent = letter === "Backspace" ? "⌫" : letter === "Next" ? "Next →" : letter;
-        button.setAttribute("aria-label", letter === "Backspace" ? "Delete letter" : letter === "Next" ? "Next clue" : letter);
+        button.textContent = letter === "Backspace" ? "⌫" : letter;
+        button.setAttribute("aria-label", letter === "Backspace" ? "Delete letter" : letter);
         button.addEventListener("pointerdown", (ev) => ev.preventDefault());
         button.addEventListener("click", () => {
           focusCell(ar, ac);
           if (letter === "Backspace") eraseLetter();
-          else if (letter === "Next") moveWord(1);
           else writeCell(ar, ac, letter);
         });
         row.appendChild(button);
@@ -612,6 +629,8 @@
       else wrap.classList.remove("touch-mode");
       keyboard.hidden = !touchMode;
       hintExtras.open = !touchMode;
+      if (touchMode && hb.querySelector(".clue-meta")) hb.querySelector(".clue-meta").appendChild(progressLabel);
+      else header.appendChild(progressLabel);
       keyboardHelp.textContent = touchMode
         ? "Tap a square in the grid, then use the crossword keyboard. Use Across or Down to switch direction."
         : "Double-click a square or press Space to switch direction. Arrow keys move; Tab leaves the grid.";
@@ -659,10 +678,7 @@
         const m = cellMap[ar][ac];
         directionButtons[d].disabled = (d === "across" ? m.ai : m.di) < 0;
       }
-      if (wordKey === renderedWord) {
-        updateKeyboardCaption();
-        return;
-      }
+      if (wordKey === renderedWord) return;
       renderedWord = wordKey;
       for (const input of highlightedCells) input.parentElement.classList.remove("word-active");
       highlightedCells = [];
@@ -699,7 +715,11 @@
           highlightedCells.push(input);
         }
         h3.textContent = `${e.type === "across" ? "Across" : "Down"} ${entry.pub} (${word.len} letters)`;
-        hb.appendChild(h3);
+        const meta = document.createElement("div");
+        meta.className = "clue-meta";
+        meta.appendChild(h3);
+        if (touchMode) meta.appendChild(progressLabel);
+        hb.appendChild(meta);
         const p = document.createElement("p");
         p.className = "basic-clue";
         appendClueWords(p, entry.clue);
@@ -740,7 +760,6 @@
           he.appendChild(reveal);
         }
       });
-      updateKeyboardCaption();
     }
 
     const firstRow = rows.findIndex((row) => row.includes("."));

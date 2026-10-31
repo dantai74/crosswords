@@ -39,10 +39,10 @@ If browser storage is unavailable or full, a status message appears and you can 
 Small touch screens automatically get a phone layout based on screen size and pointer capability. Desktop layout and physical-keyboard controls remain available as before.
 
 - **Grid fits the screen:** tap a square, or use **Zoom grid** for larger cells and pan around. **Fit grid** returns to the full-board view.
-- **Active clue stays close:** a compact panel above the board shows the clue, direction controls, and hints. Select and enter letters directly in the grid. Previous/next buttons navigate clues in numerical order.
-- **Crossword keyboard:** letter keys fill and advance in your chosen direction; delete clears a letter, and **Next** moves to the next clue. It replaces the phone keyboard while solving, avoiding autocorrect and repeated keyboard popups. Connected physical keyboards still work.
+- **Active clue comes first:** the phone hides the page title and top library link. The compact clue panel shows direction controls, the current clue, and hints, with the filled-letter count right-aligned beside the clue number and length. Select and enter letters directly in the grid.
+- **Crossword keyboard:** letter keys fill and advance in your chosen direction; delete clears a letter. The **<** and **>** buttons above the keys move to the previous or next clue in numerical order. It replaces the phone keyboard while solving, avoiding autocorrect and repeated keyboard popups. Connected physical keyboards still work.
 - **Hints on demand:** tap **Hints & answer** to expand the existing hint tiers and spoiler control. Across/Down buttons switch direction.
-- **More room when needed:** hide the crossword keyboard to read clues or the reference image; tapping a grid square brings it back. **All clues** jumps to the numbered lists.
+- **More room when needed:** hide the crossword keyboard to read clues or the reference image; tapping a grid square brings it back. **All across clues** and **All down clues** jump to their respective lists. **All puzzles**, below the lists, returns to the library.
 
 The puzzle library also becomes a list of cards on phones. Saved progress and Google meaning links work the same way as on desktop.
 
@@ -140,6 +140,10 @@ The bundled **Final Assessment** puzzle has a corrected 21×21 grid, all 138 ent
 **Set a Side**, by Christopher Youngs (October 28, 2026), is also included. Its 15×15 grid has 76 entries and 228 authored hints; every answer was verified against the supplied solution screenshot. See [its transcription notes](docs/set-aside-transcription.md).
 
 **Jump Scares**, by Mike Shenk (October 29, 2026), has 74 entries and 222 hints, verified against the supplied solution. Four theme answers have a separate neighboring `BOO` entry; the grid accepts the exact fragments shown in the key, and each answer spoiler explains the full phrase. See [its transcription notes](docs/jump-scares-transcription.md).
+
+**On the Wrong Track**, by Brad Wiegmann (October 17, 2026), has a 21×21 grid, 140 entries, and 420 authored hints verified against the supplied answer key. Its theme pairs songs with characters who would rather not hear them. The numeral `4` occupies one square in `ILLTUMBLE4YA` and `ACT4`; phones show a `4` key for this puzzle. See [its transcription notes](docs/on-the-wrong-track-transcription.md).
+
+**All Aboard!**, by Jerry Miccolis (September 9, 2026), has 78 entries and 234 authored hints in a 15×15 grid. Answers match the supplied solution; five theme entries combine an occupation-related word with a type of vessel. See [its transcription notes](docs/all-aboard-transcription.md).
 
 ## Writing hints
 

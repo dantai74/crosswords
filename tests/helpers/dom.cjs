@@ -55,7 +55,14 @@ class Element {
   }
   getAttribute(name) { return this.attributes.get(name) ?? null; }
   removeAttribute(name) { this.attributes.delete(name); }
-  appendChild(node) { node.parentElement = this; this.childNodes.push(node); return node; }
+  appendChild(node) {
+    if (node.parentElement) {
+      node.parentElement.childNodes = node.parentElement.childNodes.filter((child) => child !== node);
+    }
+    node.parentElement = this;
+    this.childNodes.push(node);
+    return node;
+  }
   append(...nodes) { nodes.forEach((node) => this.appendChild(node)); }
   matches(selector) {
     const tag = selector.match(/^[\w-]+/);

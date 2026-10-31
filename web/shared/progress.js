@@ -10,7 +10,7 @@
     if (!cells || typeof cells !== "object" || Array.isArray(cells)) return clean;
     for (const [coordinate, letter] of Object.entries(cells)) {
       if (!/^(0|[1-9]\d*),(0|[1-9]\d*)$/.test(coordinate)) continue;
-      if (typeof letter !== "string" || !/^[A-Za-z]$/.test(letter)) continue;
+      if (typeof letter !== "string" || !/^[A-Za-z0-9]$/.test(letter)) continue;
       const [r, c] = coordinate.split(",").map(Number);
       if (rows && rows[r]?.[c] !== ".") continue;
       clean[coordinate] = letter.toUpperCase();
@@ -65,7 +65,7 @@
       for (let c = 0; c < row.length; c++) {
         if (row[c] !== ".") continue;
         const ch = cells[`${r},${c}`];
-        if (ch && /[A-Za-z]/.test(ch)) n++;
+        if (ch && /[A-Za-z0-9]/.test(ch)) n++;
       }
     }
     return n;
@@ -73,7 +73,7 @@
 
   function countFilledKeys(cells) {
     return Object.values(cells || {}).filter(
-      (ch) => ch && /[A-Za-z]/.test(String(ch))
+      (ch) => ch && /[A-Za-z0-9]/.test(String(ch))
     ).length;
   }
 

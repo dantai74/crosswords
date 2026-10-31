@@ -137,6 +137,13 @@ test("Final Assessment has a full solution and distinct, non-placeholder hint ti
 });
 
 for (const spec of [
+  { slug: "all-aboard", title: "All Aboard!", author: "Jerry Miccolis", date: "2026-09-09",
+    cells: 189, across: 39, down: 39, hints: 234,
+    themes: [[16, "SOFTLAUNCH"], [23, "SCHOLARSHIP"], [34, "HEADLINER"], [48, "NAILCLIPPER"], [57, "STAGECRAFT"]] },
+  { slug: "on-the-wrong-track", title: "On the Wrong Track", author: "Brad Wiegmann", date: "2026-10-17",
+    size: 21, cells: 363, across: 67, down: 73, hints: 420,
+    themes: [[22, "SAYMYNAME"], [27, "ILLTUMBLE4YA"], [32, "BRICKHOUSE"], [50, "CROCODILEROCK"],
+      [66, "BADLIAR"], [81, "SPINNINGWHEEL"], [95, "FREEFALLIN"], [102, "SOAKUPTHESUN"], [112, "HOTHOTHOT"]] },
   { slug: "set-aside", title: "Set a Side", author: "Christopher Youngs", date: "2026-10-28",
     cells: 191, across: 39, down: 37, hints: 228,
     themes: [[20, "KEEPINGABREAST"], [34, "TAKENABACK"], [41, "THINKAHEAD"], [55, "THEGAMEISAFOOT"], [67, "APART"]] },
@@ -156,14 +163,14 @@ for (const spec of [
     assert.equal(data.author, spec.author);
     assert.equal(data.publishedDate, spec.date);
     assert.deepEqual(data.rows, source.rows);
-    assert.equal(data.rows.length, 15);
-    assert.ok(data.rows.every((row) => row.length === 15));
+    assert.equal(data.rows.length, spec.size || 15);
+    assert.ok(data.rows.every((row) => row.length === (spec.size || 15)));
     assert.equal(context.CrosswordProgress.countWhiteCells(data.rows), spec.cells);
     assert.equal(data.across.length, spec.across);
     assert.equal(data.down.length, spec.down);
     assert.ok(fs.existsSync(path.join(root, source.sourceScreenshot)));
     assert.ok(fs.existsSync(path.join(root, source.solutionScreenshot)));
-    assert.deepEqual(source.solutionRows.map((row) => row.replace(/[A-Z]/g, ".")), data.rows);
+    assert.deepEqual(source.solutionRows.map((row) => row.replace(/[A-Z0-9]/g, ".")), data.rows);
     const hints = [];
     for (const direction of ["across", "down"]) {
       assert.deepEqual(data[direction].map((entry) => entry.pub).sort((a, b) => a - b),

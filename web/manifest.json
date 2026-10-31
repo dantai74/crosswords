@@ -21,6 +21,26 @@
       "progressRevision": 1
     },
     {
+      "id": "on-the-wrong-track-2026-10-17",
+      "title": "On the Wrong Track",
+      "author": "Brad Wiegmann",
+      "date": "2026-10-17",
+      "href": "puzzles/on-the-wrong-track-2026-10-17.html",
+      "screenshot": "screenshots/on-the-wrong-track-2026-10-17.png",
+      "whiteCellCount": 363,
+      "progressRevision": 1
+    },
+    {
+      "id": "all-aboard-2026-09-09",
+      "title": "All Aboard!",
+      "author": "Jerry Miccolis",
+      "date": "2026-09-09",
+      "href": "puzzles/all-aboard-2026-09-09.html",
+      "screenshot": "screenshots/all-aboard-2026-09-09.png",
+      "whiteCellCount": 189,
+      "progressRevision": 1
+    },
+    {
       "id": "final-assessment-2026-04-12",
       "title": "Final Assessment",
       "author": "Randolph Ross",
