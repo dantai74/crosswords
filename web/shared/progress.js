@@ -58,6 +58,27 @@
     }
   }
 
+  function viewKey(puzzleId, revision) {
+    return key(puzzleId, revision).replace(".progress.", ".view.");
+  }
+
+  function loadView(puzzleId, rows, revision) {
+    try {
+      const view = JSON.parse(localStorage.getItem(viewKey(puzzleId, revision)));
+      if (!view || !Number.isSafeInteger(view.r) || !Number.isSafeInteger(view.c) ||
+          rows[view.r]?.[view.c] !== "." || !["across", "down"].includes(view.dir)) return null;
+      return { r: view.r, c: view.c, dir: view.dir, zoomed: view.zoomed === true,
+        scrollLeft: Number.isFinite(view.scrollLeft) && view.scrollLeft >= 0 ? view.scrollLeft : 0,
+        scrollTop: Number.isFinite(view.scrollTop) && view.scrollTop >= 0 ? view.scrollTop : 0 };
+    } catch { return null; }
+  }
+
+  function saveView(puzzleId, view, revision) {
+    try {
+      localStorage.setItem(viewKey(puzzleId, revision), JSON.stringify(view));
+    } catch { /* Navigation remains available when storage is unavailable. */ }
+  }
+
   function countFilledCells(cells, rows) {
     let n = 0;
     for (let r = 0; r < rows.length; r++) {
@@ -105,10 +126,13 @@
       correct: saved?.correctCount ?? null,
       checkable: saved?.checkable ?? null,
       updatedAt: saved?.updatedAt ?? null,
+      completed: total > 0 && filled === total && saved?.checkable === total && saved?.correctCount === total,
     };
   }
 
   global.CrosswordProgress = {
+    loadView,
+    saveView,
     loadProgress,
     sanitizeCells,
     saveProgress,

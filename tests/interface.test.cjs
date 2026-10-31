@@ -11,7 +11,7 @@ function mount(data, puzzleFile = "puzzles/final-assessment-2026-04-12.data.js",
     matches: Boolean(options.touch),
     addEventListener(type, handler) { this.change = handler; },
   };
-  const saved = new Map();
+  const saved = options.saved || new Map();
   let saves = 0;
   const context = vm.createContext({
     document,
@@ -19,9 +19,10 @@ function mount(data, puzzleFile = "puzzles/final-assessment-2026-04-12.data.js",
     scrollBy: options.scrollBy || (() => {}),
     localStorage: {
       getItem: (key) => saved.get(key),
-      setItem: (key, value) => { saved.set(key, value); saves++; },
+      setItem: (key, value) => { saved.set(key, value); if (key.includes(".progress.")) saves++; },
       removeItem: (key) => saved.delete(key),
     },
+    confirm: options.confirm || (() => false),
     dispatchEvent() {},
     CustomEvent: class { constructor(type, detail) { this.type = type; this.detail = detail; } },
   });
@@ -33,7 +34,7 @@ function mount(data, puzzleFile = "puzzles/final-assessment-2026-04-12.data.js",
   const originalOrder = JSON.stringify(context.PUZZLE_DATA.down.map((entry) => entry.pub));
   const root = document.createElement("div");
   context.mountCrosswordPuzzle(root);
-  return { root, document, context, media, originalOrder, saveCount: () => saves };
+  return { root, document, context, media, originalOrder, saved, saveCount: () => saves };
 }
 
 test("shell mounts the full puzzle with hints beside the board and reference last", () => {
@@ -388,22 +389,28 @@ test("switching back to a desktop input mode preserves letters and restores nati
   assert.ok(root.querySelectorAll("input").every((input) => !input.readOnly && input.inputMode === "text"));
 });
 
-test("phone grid tools offer zoom and a direct jump to the clue lists", () => {
-  const { root } = mount(undefined, undefined, { touch: true });
-  const [zoom, across, down] = root.querySelectorAll(".grid-tools button");
+test("phone grid tools open a modal clue sheet with direction tabs and return to the selected clue", () => {
+  const { root, document } = mount(undefined, undefined, { touch: true });
+  const zoom = root.querySelector(".grid-tools button");
   zoom.dispatchEvent(event("click"));
   assert.equal(root.querySelector(".grid-wrap").classList.contains("zoomed"), true);
   assert.equal(zoom.textContent, "Fit grid");
   zoom.dispatchEvent(event("click"));
-  assert.equal(root.querySelector(".grid-wrap").classList.contains("zoomed"), false);
   assert.equal(zoom.getAttribute("aria-pressed"), "false");
-  across.dispatchEvent(event("click"));
-  down.dispatchEvent(event("click"));
-  assert.equal(across.textContent, "All across clues ↓");
-  assert.equal(down.textContent, "All down clues ↓");
-  for (const section of root.querySelectorAll(".clues")) {
-    assert.equal(section.scrollIntoViewOptions.block, "start");
-  }
+  root.querySelector(".open-clues").dispatchEvent(event("click"));
+  const sheet = root.querySelector(".clues-dialog");
+  assert.equal(sheet.open, true);
+  assert.equal(root.querySelector(".clue-panels").parentElement, sheet);
+  const sections = sheet.querySelectorAll(".clues");
+  assert.equal(sections[0].hidden, false);
+  assert.equal(sections[1].hidden, true);
+  sheet.querySelectorAll(".clues-sheet-controls button")[1].dispatchEvent(event("click"));
+  assert.equal(sections[0].hidden, true);
+  assert.equal(sections[1].hidden, false);
+  sections[1].querySelector(".clue-btn").dispatchEvent(event("click"));
+  assert.equal(sheet.open, false);
+  assert.match(root.querySelector("#hint-basic h3").textContent, /^Down 1 /);
+  assert.equal(document.activeElement.tagName, "INPUT");
 });
 
 test("touch navigation keeps the active square above the fixed keyboard", () => {
@@ -420,7 +427,7 @@ test("touch navigation keeps the active square above the fixed keyboard", () => 
 test("phone grid mistakes clear after editing the selected square", () => {
   const { root } = mount(undefined, undefined, { touch: true });
   root.querySelector('.keyboard-key[data-key="Z"]').dispatchEvent(event("click"));
-  root.querySelector(".toolbar button").dispatchEvent(event("click"));
+  root.querySelector(".keyboard-check").dispatchEvent(event("click"));
   assert.equal(root.querySelectorAll("input")[0].classList.contains("wrong"), true);
   root.querySelectorAll("input")[0].focus();
   root.querySelector('.keyboard-key[data-key="C"]').dispatchEvent(event("click"));
@@ -489,4 +496,164 @@ test("the supplied numeric crossing accepts desktop, physical and phone number i
       assert.equal(digit.value, "8");
     }
   }
+});
+
+
+test("phone keyboard direction stays synchronized with grid and clue navigation", () => {
+  const { root, document, saveCount } = mount(undefined, undefined, { touch: true });
+  const toggle = root.querySelector(".keyboard-direction");
+  const cell = document.activeElement;
+  const saves = saveCount();
+  assert.equal(toggle.textContent, "Across →");
+  toggle.dispatchEvent(event("click"));
+  assert.equal(document.activeElement, cell);
+  assert.equal(toggle.textContent, "Down ↓");
+  assert.match(root.querySelector("#hint-basic h3").textContent, /^Down 1 /);
+  assert.match(toggle.getAttribute("aria-label"), /Switch to across/);
+  cell.dispatchEvent(event("keydown", { key: " " }));
+  assert.equal(toggle.textContent, "Across →");
+  assert.equal(saveCount(), saves);
+});
+
+test("Check and Clear move between phone keyboard and desktop toolbar without duplication", () => {
+  let approved = false;
+  const { root, context, media } = mount(undefined, undefined, { touch: true, confirm: () => approved });
+  const check = root.querySelector(".keyboard-check");
+  const clear = root.querySelector(".keyboard-clear");
+  assert.equal(check.parentElement, root.querySelector(".keyboard-top"));
+  assert.equal(clear.parentElement, check.parentElement);
+  assert.equal(root.querySelectorAll(".toolbar button").length, 0);
+  assert.equal(check.textContent, "✓ Check");
+  root.querySelector('.keyboard-key[data-key="Z"]').dispatchEvent(event("click"));
+  check.dispatchEvent(event("click"));
+  assert.equal(root.querySelectorAll("input")[0].classList.contains("wrong"), true);
+  clear.dispatchEvent(event("click"));
+  assert.equal(root.querySelectorAll("input")[0].value, "Z");
+  approved = true;
+  clear.dispatchEvent(event("click"));
+  assert.ok(root.querySelectorAll("input").every((input) => !input.value && !input.classList.contains("wrong")));
+  assert.equal(context.CrosswordProgress.loadProgress(context.PUZZLE_DATA.id,
+    context.PUZZLE_DATA.rows, context.PUZZLE_DATA.progressRevision).filled, 0);
+  media.matches = false;
+  media.change();
+  assert.equal(check.parentElement, root.querySelector(".toolbar"));
+  assert.equal(clear.parentElement, check.parentElement);
+  assert.equal(check.textContent, "Check known letters");
+  assert.equal(clear.textContent, "Clear progress");
+  media.matches = true;
+  media.change();
+  assert.equal(check.parentElement, root.querySelector(".keyboard-top"));
+  assert.equal(root.querySelectorAll('.keyboard-check').length, 1);
+  assert.equal(root.querySelectorAll('.keyboard-clear').length, 1);
+});
+
+function smallPuzzle() {
+  return { id: "small", title: "Small", rows: ["..", ".."],
+    across: [{ pub: 1, clue: "First", answer: "AB" }, { pub: 3, clue: "Second", answer: "CD" }],
+    down: [{ pub: 1, clue: "First", answer: "AC" }, { pub: 2, clue: "Second", answer: "BD" }] };
+}
+
+function enterGrid(root, letters) {
+  root.querySelectorAll("input").forEach((input, i) => {
+    input.focus();
+    input.value = letters[i];
+    input.dispatchEvent(event("input"));
+  });
+}
+
+test("Undo restores overwritten and deleted letters and a confirmed clear as one edit", () => {
+  const { root, document } = mount(smallPuzzle(), undefined, { touch: true, confirm: () => true });
+  const undo = root.querySelector(".keyboard-undo");
+  assert.equal(undo.disabled, true);
+  enterGrid(root, "ABCD");
+  root.querySelectorAll("input")[0].focus();
+  root.querySelector('.keyboard-key[data-key="Z"]').dispatchEvent(event("click"));
+  undo.dispatchEvent(event("click"));
+  assert.equal(root.querySelectorAll("input")[0].value, "A");
+  assert.equal(document.activeElement, root.querySelectorAll("input")[0]);
+  root.querySelector('.keyboard-key[data-key="Backspace"]').dispatchEvent(event("click"));
+  undo.dispatchEvent(event("click"));
+  assert.equal(root.querySelectorAll("input")[0].value, "A");
+  root.querySelector(".keyboard-clear").dispatchEvent(event("click"));
+  assert.ok(root.querySelectorAll("input").every((input) => !input.value));
+  undo.dispatchEvent(event("click"));
+  assert.equal(root.querySelectorAll("input").map((input) => input.value).join(""), "ABCD");
+});
+
+test("Control/Command Z undo edits without consuming ordinary letter entry", () => {
+  const { root, document } = mount(smallPuzzle());
+  document.activeElement.value = "Z";
+  document.activeElement.dispatchEvent(event("input"));
+  const undoKey = event("keydown", { key: "z", metaKey: true });
+  document.activeElement.dispatchEvent(undoKey);
+  assert.equal(undoKey.defaultPrevented, true);
+  assert.equal(root.querySelectorAll("input")[0].value, "");
+  assert.equal(root.querySelector(".undo-button").disabled, true);
+});
+
+test("reopening restores the selected square, direction, zoom and grid scroll without editing progress", () => {
+  const first = mount(smallPuzzle(), undefined, { touch: true });
+  first.root.querySelector(".keyboard-direction").dispatchEvent(event("click"));
+  first.root.querySelectorAll("input")[3].focus();
+  first.root.querySelector(".grid-tools button").dispatchEvent(event("click"));
+  const grid = first.root.querySelector(".grid-wrap");
+  grid.scrollLeft = 28;
+  grid.scrollTop = 16;
+  grid.dispatchEvent(event("scroll"));
+  const second = mount(smallPuzzle(), undefined, { touch: true, saved: first.saved });
+  assert.equal(second.document.activeElement.dataset.r, "1");
+  assert.equal(second.document.activeElement.dataset.c, "1");
+  assert.equal(second.root.querySelector(".keyboard-direction").textContent, "Down ↓");
+  assert.equal(second.root.querySelector(".grid-wrap").classList.contains("zoomed"), true);
+  assert.equal(second.root.querySelector(".grid-wrap").scrollLeft, 28);
+  assert.equal(second.root.querySelector(".grid-wrap").scrollTop, 16);
+  assert.equal(first.saveCount(), 1);
+});
+
+test("a correct grid celebrates completion and updates the library status; undo removes completion", () => {
+  const { root, context } = mount(smallPuzzle(), undefined, { touch: true });
+  enterGrid(root, "ABCD");
+  const completion = root.querySelector(".completion-message");
+  assert.equal(completion.hidden, false);
+  assert.equal(completion.classList.contains("solved"), true);
+  assert.match(completion.textContent, /Every answer is correct/);
+  assert.equal(context.CrosswordProgress.statsForPuzzle({ id: "small", whiteCellCount: 4 }).completed, true);
+  root.querySelector(".keyboard-undo").dispatchEvent(event("click"));
+  assert.equal(completion.hidden, true);
+  assert.equal(context.CrosswordProgress.statsForPuzzle({ id: "small", whiteCellCount: 4 }).completed, false);
+});
+
+test("a full incorrect grid prompts checking without revealing mistakes or celebrating", () => {
+  const { root, context } = mount(smallPuzzle());
+  enterGrid(root, "ABZD");
+  const completion = root.querySelector(".completion-message");
+  assert.equal(completion.hidden, false);
+  assert.equal(completion.classList.contains("solved"), false);
+  assert.match(completion.textContent, /Some letters need another look/);
+  assert.ok(root.querySelectorAll("input").every((input) => !input.classList.contains("wrong")));
+  assert.equal(context.CrosswordProgress.statsForPuzzle({ id: "small", whiteCellCount: 4 }).completed, false);
+});
+
+test("a partial key cannot certify a full grid as completed", () => {
+  const data = smallPuzzle();
+  data.across[1].answer = "";
+  data.down.forEach((entry) => { entry.answer = ""; });
+  const { root, context } = mount(data);
+  enterGrid(root, "ABCD");
+  assert.match(root.querySelector(".completion-message").textContent, /partial answer key/);
+  assert.equal(context.CrosswordProgress.statsForPuzzle({ id: "small", whiteCellCount: 4 }).completed, false);
+});
+
+test("switching to desktop closes the clue sheet and restores both lists below the grid", () => {
+  const { root, media } = mount(undefined, undefined, { touch: true });
+  root.querySelector(".open-clues").dispatchEvent(event("click"));
+  root.querySelector(".close-clues").dispatchEvent(event("click"));
+  assert.equal(root.querySelector(".clues-dialog").open, false);
+  root.querySelector(".open-clues").dispatchEvent(event("click"));
+  media.matches = false;
+  media.change();
+  assert.equal(root.querySelector(".clues-dialog").open, false);
+  assert.equal(root.querySelector(".clue-panels").parentElement, root.querySelector(".puzzle-main"));
+  assert.ok(root.querySelectorAll(".clues").every((section) => !section.hidden));
+  assert.equal(root.querySelector(".open-clues").hidden, true);
 });

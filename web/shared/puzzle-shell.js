@@ -22,6 +22,9 @@
     const inputs = {};
     const cellLetters = {};
     let userCells = {};
+    const undoHistory = [];
+    let viewReady = false;
+    let wasCompleted = false;
     let renderedWord = "";
     let highlightedCells = [];
     const touchLayout = global.matchMedia?.("(max-width: 760px) and (pointer: coarse), (max-height: 520px) and (pointer: coarse)");
@@ -35,6 +38,36 @@
     const totalWhite = Prog.countWhiteCells(rows);
     const saved = Prog.loadProgress(data.id, rows, data.progressRevision);
     if (saved && saved.cells) userCells = { ...saved.cells };
+    wasCompleted = saved?.filled === totalWhite && saved?.correctCount === totalWhite && saved?.checkable === totalWhite;
+    const savedView = Prog.loadView(data.id, rows, data.progressRevision);
+
+    function saveView() {
+      if (!viewReady) return;
+      Prog.saveView(data.id, { r: ar, c: ac, dir,
+        zoomed: gridWrap.classList.contains("zoomed"),
+        scrollLeft: gridWrap.scrollLeft, scrollTop: gridWrap.scrollTop }, data.progressRevision);
+    }
+
+    function rememberEdit() {
+      undoHistory.push({ cells: { ...userCells }, r: ar, c: ac, dir });
+      if (undoHistory.length > 100) undoHistory.shift();
+      undoButton.disabled = false;
+    }
+
+    function undoEdit() {
+      const previous = undoHistory.pop();
+      if (!previous) return;
+      userCells = previous.cells;
+      for (const [key, input] of Object.entries(inputs)) {
+        input.value = userCells[key] || "";
+        cellLetters[key].textContent = input.value;
+        input.classList.remove("wrong");
+      }
+      dir = previous.dir;
+      focusCell(previous.r, previous.c);
+      undoButton.disabled = !undoHistory.length;
+      persist();
+    }
 
     function persist() {
       const filled = Prog.countFilledCells(userCells, rows);
@@ -48,6 +81,14 @@
         answersAcross,
         answersDown
       );
+      const completed = filled === totalWhite && cc.checkable === totalWhite && cc.correct === totalWhite;
+      completion.hidden = filled !== totalWhite;
+      completion.className = completed ? "completion-message solved" : "completion-message";
+      completionText.textContent = completed ? "✓ Puzzle complete! Every answer is correct." :
+        cc.checkable === totalWhite ? "The grid is full. Some letters need another look—use Check when you’re ready." :
+        "The grid is full. This puzzle has a partial answer key, so completion cannot be verified yet.";
+      completion.setAttribute("data-celebrate", String(completed && !wasCompleted));
+      wasCompleted = completed;
       const savedOk = Prog.saveProgress(data.id, {
         cells: userCells,
         filled,
@@ -112,6 +153,7 @@
     function writeCell(r, c, value) {
       const key = `${r},${c}`;
       const letter = value.replace(/[^A-Za-z0-9]/g, "").slice(-1).toUpperCase();
+      if ((userCells[key] || "") !== letter) rememberEdit();
       inputs[key].value = letter;
       cellLetters[key].textContent = letter;
       inputs[key].classList.remove("wrong");
@@ -119,6 +161,7 @@
       else delete userCells[key];
       persist();
       if (letter) advanceFrom(r, c, dir, false);
+      saveView();
     }
 
     function eraseLetter() {
@@ -289,6 +332,11 @@
           writeCell(r, c, inp.value);
         });
         inp.addEventListener("keydown", (ev) => {
+          if ((ev.ctrlKey || ev.metaKey) && !ev.altKey && !ev.shiftKey && ev.key.toLowerCase() === "z") {
+            ev.preventDefault();
+            undoEdit();
+            return;
+          }
           if (touchMode && /^[a-z0-9]$/i.test(ev.key) && !ev.ctrlKey && !ev.metaKey && !ev.altKey) {
             ev.preventDefault();
             writeCell(r, c, ev.key);
@@ -362,6 +410,7 @@
       else gridWrap.classList.remove("zoomed");
       zoomButton.textContent = zoomed ? "Fit grid" : "Zoom grid";
       zoomButton.setAttribute("aria-pressed", String(zoomed));
+      saveView();
       revealWithin(gridWrap, inputs[`${ar},${ac}`].parentElement);
     });
     const acrossCluesButton = document.createElement("button");
@@ -372,7 +421,20 @@
     downCluesButton.type = "button";
     downCluesButton.textContent = "All down clues ↓";
     downCluesButton.addEventListener("click", () => cluesDn.scrollIntoView({ block: "start" }));
-    gridTools.append(zoomButton, acrossCluesButton, downCluesButton);
+    const cluesButton = document.createElement("button");
+    cluesButton.type = "button";
+    cluesButton.className = "open-clues";
+    cluesButton.textContent = "Clues";
+    cluesButton.setAttribute("aria-haspopup", "dialog");
+    cluesButton.addEventListener("click", () => {
+      showClueTab(dir);
+      cluesDialog.showModal();
+      const m = cellMap[ar][ac];
+      const selected = cluePanels.querySelector(`.clue-btn[data-dir="${dir}"][data-idx="${dir === "across" ? m.ai : m.di}"]`);
+      if (selected) { selected.focus(); showClue(selected); }
+    });
+    gridTools.append(zoomButton, cluesButton, acrossCluesButton, downCluesButton);
+    gridWrap.addEventListener("scroll", saveView);
 
     const toolbar = document.createElement("div");
     toolbar.className = "toolbar";
@@ -384,6 +446,7 @@
     const checkBtn = document.createElement("button");
     checkBtn.type = "button";
     checkBtn.className = "primary-button";
+    checkBtn.setAttribute("aria-label", "Check known letters");
     checkBtn.textContent = "Check known letters";
     checkBtn.title = "Mark incorrect filled letters in red. Empty cells are left unchanged.";
     checkBtn.addEventListener("click", () => {
@@ -416,9 +479,12 @@
     });
     const clearBtn = document.createElement("button");
     clearBtn.type = "button";
+    clearBtn.setAttribute("aria-label", "Clear progress");
+    clearBtn.title = "Clear all entered letters for this puzzle";
     clearBtn.textContent = "Clear progress";
     clearBtn.addEventListener("click", () => {
       if (!confirm("Clear all letters you entered for this puzzle?")) return;
+      if (Object.keys(userCells).length) rememberEdit();
       userCells = {};
       for (const k of Object.keys(inputs)) {
         inputs[k].value = "";
@@ -428,6 +494,21 @@
       Prog.clearProgress(data.id, data.progressRevision);
       persist();
     });
+    for (const button of [checkBtn, clearBtn]) {
+      button.addEventListener("pointerdown", (ev) => {
+        if (touchMode) ev.preventDefault();
+      });
+    }
+    const undoButton = document.createElement("button");
+    undoButton.type = "button";
+    undoButton.className = "undo-button";
+    undoButton.textContent = "↶ Undo";
+    undoButton.setAttribute("aria-label", "Undo last edit");
+    undoButton.title = "Undo last edit (Ctrl/Command Z)";
+    undoButton.disabled = true;
+    undoButton.addEventListener("pointerdown", (ev) => ev.preventDefault());
+    undoButton.addEventListener("click", undoEdit);
+    toolbar.appendChild(undoButton);
     toolbar.appendChild(checkBtn);
     toolbar.appendChild(clearBtn);
     toolbar.appendChild(keyboardHelp);
@@ -483,7 +564,16 @@
     const hintSummary = document.createElement("summary");
     hintSummary.textContent = "Hints & answer";
     hintExtras.append(hintSummary, lookupHelp, he);
-    hintBox.append(hb, hintExtras);
+    const completion = document.createElement("section");
+    completion.className = "completion-message";
+    completion.hidden = true;
+    completion.setAttribute("role", "status");
+    const completionText = document.createElement("p");
+    const nextPuzzle = document.createElement("a");
+    nextPuzzle.setAttribute("href", "../index.html");
+    nextPuzzle.textContent = "Choose another puzzle →";
+    completion.append(completionText, nextPuzzle);
+    hintBox.append(hb, completion, hintExtras);
 
     const cluePanels = document.createElement("div");
     cluePanels.className = "clue-panels";
@@ -499,6 +589,7 @@
     const listD = cluesDn.querySelector(".clue-list");
 
     function selectWord(d, idx) {
+      if (cluesDialog.open) cluesDialog.close();
       dir = d;
       const p = firstCellOfWord(idx, d);
       focusCell(p.r, p.c);
@@ -547,7 +638,37 @@
     main.append(gridPanel, hintBox, cluePanels);
     cluePanels.append(cluesAc, cluesDn);
 
-    wrap.appendChild(main);
+    const cluesDialog = document.createElement("dialog");
+    cluesDialog.className = "clues-dialog";
+    cluesDialog.setAttribute("aria-label", "All clues");
+    const sheetControls = document.createElement("div");
+    sheetControls.className = "clues-sheet-controls";
+    const clueTabs = {};
+    function showClueTab(direction) {
+      for (const d of ["across", "down"]) {
+        clueTabs[d].setAttribute("aria-pressed", String(d === direction));
+      }
+      cluesAc.hidden = direction !== "across";
+      cluesDn.hidden = direction !== "down";
+    }
+    for (const direction of ["across", "down"]) {
+      const tab = document.createElement("button");
+      tab.type = "button";
+      tab.textContent = direction === "across" ? "Across" : "Down";
+      tab.addEventListener("click", () => showClueTab(direction));
+      clueTabs[direction] = tab;
+      sheetControls.appendChild(tab);
+    }
+    const closeClues = document.createElement("button");
+    closeClues.type = "button";
+    closeClues.className = "close-clues";
+    closeClues.textContent = "✕";
+    closeClues.setAttribute("aria-label", "Close clues");
+    closeClues.addEventListener("click", () => { cluesDialog.close(); cluesButton.focus(); });
+    sheetControls.appendChild(closeClues);
+    cluesDialog.appendChild(sheetControls);
+    cluesDialog.addEventListener("click", (ev) => { if (ev.target === cluesDialog) cluesDialog.close(); });
+    wrap.append(main, cluesDialog);
     const libraryLink = document.createElement("a");
     libraryLink.className = "puzzle-library-link";
     libraryLink.setAttribute("href", "../index.html");
@@ -573,11 +694,19 @@
       button.addEventListener("click", () => moveWord(step));
       keyboardNavigation.appendChild(button);
     }
+    const keyboardDirection = document.createElement("button");
+    keyboardDirection.type = "button";
+    keyboardDirection.className = "keyboard-direction";
+    keyboardDirection.addEventListener("pointerdown", (ev) => ev.preventDefault());
+    keyboardDirection.addEventListener("click", () => {
+      toggleDirection();
+      focusCell(ar, ac);
+    });
     const keyboardToggle = document.createElement("button");
     keyboardToggle.type = "button";
     keyboardToggle.className = "keyboard-toggle";
     keyboardToggle.addEventListener("click", () => setKeyboardCollapsed(!keyboard.classList.contains("collapsed")));
-    keyboardTop.append(keyboardNavigation, keyboardToggle);
+    keyboardTop.append(keyboardNavigation, keyboardDirection, keyboardToggle);
     const keyboardRows = document.createElement("div");
     keyboardRows.className = "keyboard-rows";
     for (const letters of ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"]) {
@@ -619,7 +748,9 @@
         keyboard.classList.remove("collapsed");
         wrap.classList.remove("keyboard-collapsed");
       }
-      keyboardToggle.textContent = collapsed ? "Show keyboard" : "Hide keyboard";
+      keyboardToggle.textContent = collapsed ? "⌨" : "⌄";
+      keyboardToggle.setAttribute("aria-label", collapsed ? "Show keyboard" : "Hide keyboard");
+      keyboardToggle.title = collapsed ? "Show keyboard" : "Hide keyboard";
       keyboardToggle.setAttribute("aria-expanded", String(!collapsed));
     }
 
@@ -627,7 +758,33 @@
       touchMode = Boolean(touchLayout?.matches);
       if (touchMode) wrap.classList.add("touch-mode");
       else wrap.classList.remove("touch-mode");
+      if (cluesDialog.open) cluesDialog.close();
+      cluesAc.hidden = false;
+      cluesDn.hidden = false;
+      if (touchMode) {
+        cluesDialog.appendChild(cluePanels);
+        showClueTab(dir);
+      } else main.appendChild(cluePanels);
+      cluesButton.hidden = !touchMode;
+      acrossCluesButton.hidden = touchMode;
+      downCluesButton.hidden = touchMode;
       keyboard.hidden = !touchMode;
+      if (touchMode) {
+        checkBtn.className = "keyboard-check";
+        clearBtn.className = "keyboard-clear";
+        checkBtn.textContent = "✓ Check";
+        clearBtn.textContent = "Clear";
+        keyboardTop.append(checkBtn, clearBtn, keyboardToggle);
+        undoButton.className = "keyboard-undo keyboard-action";
+        keyboardRows.children[keyboardRows.children.length - 1].appendChild(undoButton);
+      } else {
+        checkBtn.className = "primary-button";
+        clearBtn.className = "";
+        checkBtn.textContent = "Check known letters";
+        clearBtn.textContent = "Clear progress";
+        undoButton.className = "undo-button";
+        toolbar.append(undoButton, checkBtn, clearBtn, keyboardHelp, saveStatus);
+      }
       hintExtras.open = !touchMode;
       if (touchMode && hb.querySelector(".clue-meta")) hb.querySelector(".clue-meta").appendChild(progressLabel);
       else header.appendChild(progressLabel);
@@ -671,6 +828,7 @@
     }
 
     function updateChrome() {
+      saveView();
       const entries = currentEntries();
       const wordKey = entries.map((e) => `${e.type}:${e.idx}`).join(",");
       for (const d of ["across", "down"]) {
@@ -678,6 +836,10 @@
         const m = cellMap[ar][ac];
         directionButtons[d].disabled = (d === "across" ? m.ai : m.di) < 0;
       }
+      keyboardDirection.textContent = dir === "across" ? "Across →" : "Down ↓";
+      keyboardDirection.setAttribute("aria-label", `Direction: ${dir}. Switch to ${dir === "across" ? "down" : "across"}`);
+      const cell = cellMap[ar][ac];
+      keyboardDirection.disabled = cell.ai < 0 || cell.di < 0;
       if (wordKey === renderedWord) return;
       renderedWord = wordKey;
       for (const input of highlightedCells) input.parentElement.classList.remove("word-active");
@@ -763,7 +925,22 @@
     }
 
     const firstRow = rows.findIndex((row) => row.includes("."));
-    focusCell(firstRow, rows[firstRow].indexOf("."));
+    if (savedView?.zoomed) {
+      gridWrap.classList.add("zoomed");
+      zoomButton.textContent = "Fit grid";
+      zoomButton.setAttribute("aria-pressed", "true");
+    }
+    dir = savedView?.dir || "across";
+    focusCell(savedView?.r ?? firstRow, savedView?.c ?? rows[firstRow].indexOf("."));
+    if (savedView) {
+      const restoreScroll = () => {
+        gridWrap.scrollLeft = savedView.scrollLeft;
+        gridWrap.scrollTop = savedView.scrollTop;
+      };
+      restoreScroll();
+      global.requestAnimationFrame?.(restoreScroll);
+    }
+    viewReady = true;
     persist();
   }
 

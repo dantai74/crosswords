@@ -40,9 +40,13 @@ Small touch screens automatically get a phone layout based on screen size and po
 
 - **Grid fits the screen:** tap a square, or use **Zoom grid** for larger cells and pan around. **Fit grid** returns to the full-board view.
 - **Active clue comes first:** the phone hides the page title and top library link. The compact clue panel shows direction controls, the current clue, and hints, with the filled-letter count right-aligned beside the clue number and length. Select and enter letters directly in the grid.
-- **Crossword keyboard:** letter keys fill and advance in your chosen direction; delete clears a letter. The **<** and **>** buttons above the keys move to the previous or next clue in numerical order. It replaces the phone keyboard while solving, avoiding autocorrect and repeated keyboard popups. Connected physical keyboards still work.
+- **Crossword keyboard:** letter keys fill and advance in your chosen direction; delete clears a letter. The **<** and **>** buttons above the keys move to the previous or next clue in numerical order. The direction button shows **Across →** or **Down ↓** and toggles between them. This row matches the letter-key height and also contains green **✓ Check** (mark incorrect filled cells) and muted red **Clear** (erase this puzzle’s progress after confirmation). It replaces the phone keyboard while solving, avoiding autocorrect and repeated keyboard popups. Connected physical keyboards still work.
 - **Hints on demand:** tap **Hints & answer** to expand the existing hint tiers and spoiler control. Across/Down buttons switch direction.
-- **More room when needed:** hide the crossword keyboard to read clues or the reference image; tapping a grid square brings it back. **All across clues** and **All down clues** jump to their respective lists. **All puzzles**, below the lists, returns to the library.
+- **More room when needed:** hide the crossword keyboard to read clues or the reference image; tapping a grid square brings it back. **Clues** opens a panel from the bottom with Across/Down tabs. Choose a clue to close the panel and return to the grid; desktop retains both lists below the puzzle. **All puzzles**, below the lists, returns to the library.
+
+- **Resume where you left off:** the selected square, direction, zoom and grid scroll are saved on this device for each puzzle.
+- **Undo mistakes:** **↶ Undo** beside delete restores typing, overwrites, deletion or a confirmed Clear. Desktop also has an Undo button and Ctrl/Command+Z. Undo retains the last 100 edits during the current visit; reopening starts a fresh undo history.
+- **Finish a puzzle:** a fully correct grid displays a small celebration and a link to the library, where it is marked **Completed**. A full grid with errors prompts you to check without identifying mistakes automatically. Partial answer keys cannot certify completion.
 
 The puzzle library also becomes a list of cards on phones. Saved progress and Google meaning links work the same way as on desktop.
 

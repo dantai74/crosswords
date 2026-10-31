@@ -360,3 +360,28 @@ test("manifest rejects duplicate IDs and invalid puzzle URLs", async () => {
   assert.throws(() => context.validateManifest({ puzzles: [{ ...meta, href: "javascript:alert(1)" }] }), /invalid/);
   await new Promise(setImmediate);
 });
+
+test("saved view rejects invalid coordinates and directions and tolerates blocked storage", () => {
+  for (const view of [null, {}, { r: -1, c: 0, dir: "across" },
+    { r: 0, c: 1, dir: "down" }, { r: 0, c: 0, dir: "sideways" }]) {
+    const progress = runtime({ getItem: () => JSON.stringify(view) }).CrosswordProgress;
+    assert.equal(progress.loadView("test", [".#"]), null);
+  }
+  const progress = runtime({ getItem() { throw new Error("blocked"); },
+    setItem() { throw new Error("blocked"); } }).CrosswordProgress;
+  assert.equal(progress.loadView("test", [".."]), null);
+  assert.doesNotThrow(() => progress.saveView("test", { r: 0, c: 0, dir: "across" }));
+});
+
+test("the library displays a Completed badge only for completed puzzles", async () => {
+  const { context, tbody } = indexRuntime(async () => ({ ok: true, json: async () => ({ puzzles: [] }) }));
+  await new Promise(setImmediate);
+  const meta = JSON.parse(read("web/manifest.json")).puzzles[0];
+  for (const completed of [false, true]) {
+    context.window.CrosswordProgress.statsForPuzzle = () => ({
+      total: 4, filled: 4, percent: 100, correct: completed ? 4 : 3, checkable: 4, completed,
+    });
+    context.render([meta]);
+    assert.equal(tbody.children[0].innerHTML.includes("✓ Completed"), completed);
+  }
+});

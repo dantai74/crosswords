@@ -63,6 +63,8 @@ class Element {
     this.childNodes.push(node);
     return node;
   }
+  showModal() { this.open = true; }
+  close() { this.open = false; }
   append(...nodes) { nodes.forEach((node) => this.appendChild(node)); }
   matches(selector) {
     const tag = selector.match(/^[\w-]+/);
