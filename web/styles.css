@@ -1202,3 +1202,24 @@ a:focus-visible {
 body:has(.clues-dialog[open]) {
   overflow: hidden;
 }
+
+.private-use-notice {
+  max-width: 76rem;
+  margin: 2.5rem auto 0;
+  padding: clamp(1rem, 3vw, 2rem);
+  border: 2px solid #b59a64;
+  border-radius: 12px;
+  background: #fff6e5;
+  color: #594322;
+  font: 0.95rem / 1.6 system-ui, sans-serif;
+}
+
+.private-use-notice h2 {
+  margin: 0 0 0.75rem;
+  font-size: clamp(1.2rem, 3vw, 1.6rem);
+  line-height: 1.25;
+}
+
+.private-use-notice p {
+  margin: 0.75rem 0 0;
+}
