@@ -84,7 +84,9 @@
       const completed = filled === totalWhite && cc.checkable === totalWhite && cc.correct === totalWhite;
       completion.hidden = filled !== totalWhite;
       completion.className = completed ? "completion-message solved" : "completion-message";
-      completionText.textContent = completed ? "✓ Puzzle complete! Every answer is correct." :
+      completionDecorations.hidden = !completed;
+      completionTitle.hidden = !completed;
+      completionText.textContent = completed ? "Every answer is correct. Beautifully solved!" :
         cc.checkable === totalWhite ? "The grid is full. Some letters need another look—use Check when you’re ready." :
         "The grid is full. This puzzle has a partial answer key, so completion cannot be verified yet.";
       completion.setAttribute("data-celebrate", String(completed && !wasCompleted));
@@ -568,11 +570,24 @@
     completion.className = "completion-message";
     completion.hidden = true;
     completion.setAttribute("role", "status");
+    const completionDecorations = document.createElement("div");
+    completionDecorations.className = "completion-decorations";
+    completionDecorations.setAttribute("aria-hidden", "true");
+    completionDecorations.hidden = true;
+    for (const emoji of ["🎈", "🎆", "🎉", "🎇", "🎈"]) {
+      const decoration = document.createElement("span");
+      decoration.textContent = emoji;
+      completionDecorations.appendChild(decoration);
+    }
+    const completionTitle = document.createElement("strong");
+    completionTitle.className = "completion-title";
+    completionTitle.textContent = "You did it! Puzzle complete!";
+    completionTitle.hidden = true;
     const completionText = document.createElement("p");
     const nextPuzzle = document.createElement("a");
     nextPuzzle.setAttribute("href", "../index.html");
     nextPuzzle.textContent = "Choose another puzzle →";
-    completion.append(completionText, nextPuzzle);
+    completion.append(completionDecorations, completionTitle, completionText, nextPuzzle);
     hintBox.append(hb, completion, hintExtras);
 
     const cluePanels = document.createElement("div");

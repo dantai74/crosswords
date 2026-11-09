@@ -1089,9 +1089,44 @@ a:focus-visible {
 }
 
 .completion-message.solved {
-  background: #eaf4e4;
+  padding: 1rem;
+  background: linear-gradient(135deg, #fff6dc, #edf7e5 55%, #edf1ff);
   color: #28552c;
-  border-color: #afcca2;
+  border: 2px solid #bdcc94;
+  text-align: center;
+  box-shadow: 0 4px 18px #59783a18;
+}
+
+.completion-decorations {
+  display: flex;
+  justify-content: center;
+  gap: 0.3rem;
+  padding-top: 0.5rem;
+  margin-bottom: 0.35rem;
+  font-size: clamp(1.8rem, 6vw, 2.5rem);
+  line-height: 1.3;
+}
+
+.completion-title {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-size: 1.25rem;
+  line-height: 1.25;
+}
+
+.completion-message[data-celebrate="true"] .completion-decorations span {
+  animation: crossword-party 1s ease-in-out var(--party-delay, 0ms) 2 backwards;
+}
+
+.completion-decorations span:nth-child(2) { --party-delay: 80ms; }
+.completion-decorations span:nth-child(3) { --party-delay: 160ms; }
+.completion-decorations span:nth-child(4) { --party-delay: 240ms; }
+.completion-decorations span:nth-child(5) { --party-delay: 320ms; }
+
+@keyframes crossword-party {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  35% { transform: translateY(-0.45rem) rotate(-12deg) scale(1.12); }
+  65% { transform: translateY(-0.15rem) rotate(10deg); }
 }
 
 .completion-message[data-celebrate="true"] {
@@ -1196,7 +1231,8 @@ a:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .completion-message[data-celebrate="true"] { animation: none; }
+  .completion-message[data-celebrate="true"],
+  .completion-message[data-celebrate="true"] .completion-decorations span { animation: none; }
 }
 
 body:has(.clues-dialog[open]) {
