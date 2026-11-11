@@ -41,7 +41,7 @@ Small touch screens automatically get a phone layout based on screen size and po
 - **Grid fits the screen:** tap a square, or use **Zoom grid** for larger cells and pan around. **Fit grid** returns to the full-board view.
 - **Active clue comes first:** the phone hides the page title and top library link. The compact clue panel shows direction controls, the current clue, and hints, with the filled-letter count right-aligned beside the clue number and length. Select and enter letters directly in the grid.
 - **Crossword keyboard:** letter keys fill and advance in your chosen direction; delete clears a letter. The **<** and **>** buttons above the keys move to the previous or next clue in numerical order. The direction button shows **Across →** or **Down ↓** and toggles between them. The blue navigation keys are twice their former width and match the letter-key height. Compact green **✓** (check filled cells) and muted red **trash** (clear progress after confirmation) icons leave room for navigation. The duplicate navigation row in the active clue panel is hidden on phones. It replaces the phone keyboard while solving, avoiding autocorrect and repeated keyboard popups. Connected physical keyboards still work.
-- **Hints on demand:** tap **Hints & answer** to expand the existing hint tiers and spoiler control. Across/Down buttons switch direction.
+- **Hints on demand:** tap **Hints & answer** to see the gentle hint already open, with further hint tiers and the answer spoiler below. The phone panel omits the Google lookup instruction. Across/Down buttons switch direction.
 - **More room when needed:** hide the crossword keyboard to read clues or the reference image; tapping a grid square brings it back. **Clues** opens a panel from the bottom with Across/Down tabs. Choose a clue to close the panel and return to the grid; desktop retains both lists below the puzzle. **All puzzles**, below the lists, returns to the library.
 
 - **Resume where you left off:** the selected square, direction, zoom and grid scroll are saved on this device for each puzzle.
@@ -148,6 +148,10 @@ The bundled **Final Assessment** puzzle has a corrected 21×21 grid, all 138 ent
 **On the Wrong Track**, by Brad Wiegmann (October 17, 2026), has a 21×21 grid, 140 entries, and 420 authored hints verified against the supplied answer key. Its theme pairs songs with characters who would rather not hear them. The numeral `4` occupies one square in `ILLTUMBLE4YA` and `ACT4`; phones show a `4` key for this puzzle. See [its transcription notes](docs/on-the-wrong-track-transcription.md).
 
 **All Aboard!**, by Jerry Miccolis (September 9, 2026), has 78 entries and 234 authored hints in a 15×15 grid. Answers match the supplied solution; five theme entries combine an occupation-related word with a type of vessel. See [its transcription notes](docs/all-aboard-transcription.md).
+
+**Money Is Tight**, by Mike Shenk (November 9, 2026), has 76 entries and 228 authored hints in a 15×15 grid, verified against the supplied solution. Sixteen circled squares illustrate the theme; the player preserves these circles on desktop and phones. See [its transcription notes](docs/money-is-tight-transcription.md).
+
+**There’s No There There**, by Mat Holmes (November 10, 2026), has 76 entries and 228 authored hints, verified against the supplied solution. Four theme answers give literal readings of the ALL X, NO Y pattern. See [its transcription notes](docs/theres-no-there-there-transcription.md).
 
 ## Writing hints
 

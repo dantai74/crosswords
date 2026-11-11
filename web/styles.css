@@ -211,6 +211,16 @@ a {
   background: #fff;
 }
 
+.cross-grid td.circled::after {
+  content: "";
+  position: absolute;
+  inset: 8%;
+  border: 1px solid #777;
+  border-radius: 50%;
+  z-index: 2;
+  pointer-events: none;
+}
+
 .cross-grid td.word-active {
   background: #e9f0e4;
 }

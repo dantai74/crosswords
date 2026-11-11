@@ -82,6 +82,7 @@ Defined in each `puzzles/<slug>.data.js`.
 - **`answer`:** Full entry using letters or digits, uppercase ignored; **empty string** means that word does not contribute to “Check known letters”. Partial solution support is not implemented per-cell; fill whole word when known.
 - **`answerExplanation`:** Optional non-empty string shown only inside the answer spoiler. For split theme answers, `answer` must contain the physical slot's letters; explain the full phrase and where the other letters went here. Jump Scares uses this for its four separated BOO phrases.
 - **`progressRevision`:** Optional positive integer shared with the manifest entry. When grid corrections change coordinates, increment it to use a separate save slot; retain the stable puzzle `id`.
+- **`circledCells`:** Optional puzzle-level array of zero-based `[row, column]` coordinates. Coordinates must be unique white cells. The shell draws circles and includes “circled” in the inputs' accessible labels. Money Is Tight uses 16 circles to spell four increasingly compressed CENTs.
 
 ## Critical implementation details
 
@@ -111,7 +112,7 @@ Saved payload (conceptually): `{ cells: { "r,c": "A" }, filled, total, correctCo
 - `mountCrosswordPuzzle(rootEl)` expects `global.PUZZLE_DATA` already set.
 - Dispatches `CustomEvent("crossword-progress", { detail: { id } })` on save; `index.html` listens to refresh the table.
 - Grid uses one `<input maxlength=1>` per white cell with only the active cell in the tab order; double-click and Space toggle direction, arrows move without changing the current direction, and Tab/Shift+Tab leave the grid. Direction buttons provide the same action explicitly. If the destination has no word in the selected direction, focus falls back to its available word. Initial focus uses the first white cell.
-- Hint contents rebuild only when the active word changes, preserving expanded hints while typing within that word.
+- Hint contents rebuild only when the active word changes, preserving expanded hints while typing within that word. On phones, the gentle tier opens by default for each new clue and whenever Hints & answer is reopened; further tiers and the answer remain closed by default. The Google lookup instruction is hidden on phones.
 - When the active word changes, its clue list scrolls to reveal the highlighted row. Adjust only the list's `scrollTop`, preserving grid focus and the document's scroll position; already visible rows and moves within the same word do not scroll.
 - Cells are 36.4px (30% larger than the original 28px), with proportionally larger letters and numbers. The active word is highlighted.
 - At 1160px and wider, the active clue and hints sit beside the grid; Across and Down lists sit below. Lists display in numerical order, preserving original array indices for grid selection. At 640px the clue lists become two columns. The screenshot is in collapsed reference details after the main layout.

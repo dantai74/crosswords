@@ -1,6 +1,26 @@
 {
   "puzzles": [
     {
+      "id": "theres-no-there-there-2026-11-10",
+      "title": "There’s No There There",
+      "author": "Mat Holmes",
+      "date": "2026-11-10",
+      "href": "puzzles/theres-no-there-there-2026-11-10.html",
+      "screenshot": "screenshots/theres-no-there-there-2026-11-10.png",
+      "whiteCellCount": 185,
+      "progressRevision": 1
+    },
+    {
+      "id": "money-is-tight-2026-11-09",
+      "title": "Money Is Tight",
+      "author": "Mike Shenk",
+      "date": "2026-11-09",
+      "href": "puzzles/money-is-tight-2026-11-09.html",
+      "screenshot": "screenshots/money-is-tight-2026-11-09.png",
+      "whiteCellCount": 183,
+      "progressRevision": 1
+    },
+    {
       "id": "jump-scares-2026-10-29",
       "title": "Jump Scares",
       "author": "Mike Shenk",

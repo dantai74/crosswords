@@ -12,6 +12,11 @@
       typeof row === "string" && row.length === width && /^[.#]+$/.test(row)
     ), "rows must have equal width and contain only . or #");
     requireValid(data.rows.some((row) => row.includes(".")), "grid has no white cells");
+    requireValid(data.circledCells === undefined || (Array.isArray(data.circledCells) &&
+      data.circledCells.every((cell) => Array.isArray(cell) && cell.length === 2 &&
+        cell.every(Number.isSafeInteger) && isWhite(data.rows, cell[0], cell[1])) &&
+      new Set(data.circledCells.map((cell) => cell.join(","))).size === data.circledCells.length),
+      "circledCells must contain unique white-cell [row, column] coordinates");
     const words = extractWords(data.rows);
     const labels = numberGrid(data.rows, words.across, words.down);
     requireValid(data.progressRevision === undefined ||

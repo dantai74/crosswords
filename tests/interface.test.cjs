@@ -305,6 +305,8 @@ test("desktop keeps editable inputs, expanded hints, and no touch keyboard", () 
   assert.equal(root.querySelector(".touch-keyboard").hidden, true);
   assert.equal(root.querySelector(".puzzle-shell").classList.contains("touch-mode"), false);
   assert.equal(root.querySelector(".hint-extras").open, true);
+  assert.equal(root.querySelector(".lookup-help").hidden, false);
+  assert.equal(root.querySelector(".ext-hint").open, false);
   assert.ok(root.querySelectorAll("input").every((input) => !input.readOnly && input.inputMode === "text"));
   assert.equal(document.activeElement.focusOptions.preventScroll, false);
   document.activeElement.value = "C";
@@ -316,8 +318,29 @@ test("desktop keeps editable inputs, expanded hints, and no touch keyboard", () 
   assert.equal(scrolls.length, 0);
 });
 
+test("phone hints hide lookup help and open the gentle hint on expansion and clue changes", () => {
+  const { root, media } = mount(undefined, "puzzles/theres-no-there-there-2026-11-10.data.js", { touch: true });
+  const extras = root.querySelector(".hint-extras");
+  assert.equal(root.querySelector(".lookup-help").hidden, true);
+  assert.equal(extras.open, false);
+  extras.open = true;
+  extras.dispatchEvent(event("toggle"));
+  assert.deepEqual(root.querySelectorAll("#hint-ext details").map((hint) => Boolean(hint.open)), [true, false, false, false]);
+  root.querySelector(".ext-hint").open = false;
+  extras.open = false;
+  extras.dispatchEvent(event("toggle"));
+  extras.open = true;
+  extras.dispatchEvent(event("toggle"));
+  assert.equal(root.querySelector(".ext-hint").open, true);
+  root.querySelector('.keyboard-nav[data-key="Next"]').dispatchEvent(event("click"));
+  assert.deepEqual(root.querySelectorAll("#hint-ext details").map((hint) => Boolean(hint.open)), [true, false, false, false]);
+  media.matches = false;
+  media.change();
+  assert.equal(root.querySelector(".lookup-help").hidden, false);
+});
+
 test("small touch screens use a dedicated keyboard and collapsed hints for every puzzle", () => {
-  for (const file of ["final-assessment-2026-04-12", "set-aside-2026-10-28", "jump-scares-2026-10-29", "on-the-wrong-track-2026-10-17", "all-aboard-2026-09-09"]) {
+  for (const file of ["final-assessment-2026-04-12", "set-aside-2026-10-28", "jump-scares-2026-10-29", "on-the-wrong-track-2026-10-17", "all-aboard-2026-09-09", "money-is-tight-2026-11-09", "theres-no-there-there-2026-11-10"]) {
     const { root, document } = mount(undefined, `puzzles/${file}.data.js`, { touch: true });
     assert.equal(root.querySelector(".touch-keyboard").hidden, false);
     assert.equal(root.querySelector(".puzzle-shell").classList.contains("touch-mode"), true);
@@ -330,6 +353,21 @@ test("small touch screens use a dedicated keyboard and collapsed hints for every
     assert.equal(root.querySelectorAll(".keyboard-nav").length, 2);
     assert.equal(root.querySelector(".keyboard-top span"), null);
     assert.match(root.querySelector(".clue-meta .puzzle-progress").textContent, /^0 \/ /);
+  }
+});
+
+test("Money Is Tight preserves all theme circles and accessible labels on desktop and phone", () => {
+  const source = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/money-is-tight-source.json"), "utf8"));
+  for (const touch of [false, true]) {
+    const { root } = mount(undefined, "puzzles/money-is-tight-2026-11-09.data.js", { touch });
+    const circled = root.querySelectorAll(".circled");
+    assert.equal(circled.length, 16);
+    const coordinates = circled.map((cell) => {
+      const input = cell.querySelector("input");
+      assert.match(input.getAttribute("aria-label"), /, circled$/);
+      return [Number(input.dataset.r), Number(input.dataset.c)];
+    });
+    assert.deepEqual(coordinates, source.circledCells);
   }
 });
 

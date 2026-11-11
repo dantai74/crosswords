@@ -137,6 +137,12 @@ test("Final Assessment has a full solution and distinct, non-placeholder hint ti
 });
 
 for (const spec of [
+  { slug: "theres-no-there-there", title: "There’s No There There", author: "Mat Holmes", date: "2026-11-10",
+    cells: 185, across: 37, down: 39, hints: 228,
+    themes: [[20, "ALLBARKNOBITE"], [28, "ALLFLASHNOCASH"], [47, "ALLHATNOCATTLE"], [54, "ALLFOAMNOBEER"]] },
+  { slug: "money-is-tight", title: "Money Is Tight", author: "Mike Shenk", date: "2026-11-09",
+    cells: 183, across: 35, down: 41, hints: 228,
+    themes: [[17, "BECAUSETHENIGHT"], [22, "CASESENSITIVE"], [40, "LUNCHEONETTES"], [48, "ASCENTS"], [60, "PINCHINGPENNIES"]] },
   { slug: "all-aboard", title: "All Aboard!", author: "Jerry Miccolis", date: "2026-09-09",
     cells: 189, across: 39, down: 39, hints: 234,
     themes: [[16, "SOFTLAUNCH"], [23, "SCHOLARSHIP"], [34, "HEADLINER"], [48, "NAILCLIPPER"], [57, "STAGECRAFT"]] },
@@ -202,6 +208,23 @@ for (const spec of [
     }
   });
 }
+
+test("Money Is Tight circles pinch four pennies with decreasing gaps", () => {
+  const context = runtime();
+  context.window = context;
+  vm.runInContext(read("web/puzzles/money-is-tight-2026-11-09.data.js"), context);
+  const data = JSON.parse(JSON.stringify(context.PUZZLE_DATA));
+  const source = JSON.parse(read("tests/fixtures/money-is-tight-source.json"));
+  assert.deepEqual(data.circledCells, source.circledCells);
+  [2, 4, 8, 10].forEach((r, i) => {
+    const columns = data.circledCells.filter((cell) => cell[0] === r).map((cell) => cell[1]);
+    assert.equal(columns.map((c) => source.solutionRows[r][c]).join(""), "CENT");
+    assert.deepEqual(columns.slice(1).map((c, j) => c - columns[j]), Array(3).fill(4 - i));
+  });
+  for (const invalid of [null, [[0, 4]], [[-1, 0]], [[0.5, 0]], [[0, 0], [0, 0]], [[0, 0, 0]]]) {
+    assert.throws(() => context.CrosswordEngine.validatePuzzle({ ...data, circledCells: invalid }), /circledCells/);
+  }
+});
 
 test("Jump Scares theme fragments combine with adjacent BOO entries into full answers", () => {
   const context = runtime();

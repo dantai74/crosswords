@@ -289,6 +289,7 @@
     table.setAttribute("aria-label", "Crossword puzzle");
     table.style.setProperty("--grid-columns", String(W));
     table.style.setProperty("--grid-rows", String(H));
+    const circledCells = new Set((data.circledCells || []).map((cell) => cell.join(",")));
 
     for (let r = 0; r < H; r++) {
       const tr = document.createElement("tr");
@@ -300,6 +301,8 @@
           continue;
         }
         td.className = "cell white";
+        const circled = circledCells.has(`${r},${c}`);
+        if (circled) td.classList.add("circled");
         td.addEventListener("dblclick", (ev) => {
           ev.preventDefault();
           focusCell(r, c);
@@ -319,7 +322,7 @@
         inp.className = "cell-input";
         inp.dataset.r = String(r);
         inp.dataset.c = String(c);
-        inp.setAttribute("aria-label", `Row ${r + 1} column ${c + 1}`);
+        inp.setAttribute("aria-label", `Row ${r + 1} column ${c + 1}${circled ? ", circled" : ""}`);
         inp.setAttribute("aria-describedby", "hint-basic grid-help");
         inp.autocomplete = "off";
         inp.setAttribute("autocapitalize", "characters");
@@ -566,6 +569,12 @@
     const hintSummary = document.createElement("summary");
     hintSummary.textContent = "Hints & answer";
     hintExtras.append(hintSummary, lookupHelp, he);
+    hintExtras.addEventListener("toggle", () => {
+      if (touchMode && hintExtras.open) {
+        const gentleHint = he.querySelector(".ext-hint");
+        if (gentleHint && !gentleHint.classList.contains("answer-reveal")) gentleHint.open = true;
+      }
+    });
     const completion = document.createElement("section");
     completion.className = "completion-message";
     completion.hidden = true;
@@ -805,6 +814,11 @@
         toolbar.append(undoButton, checkBtn, clearBtn, keyboardHelp, saveStatus);
       }
       hintExtras.open = !touchMode;
+      lookupHelp.hidden = touchMode;
+      if (touchMode) {
+        const gentleHint = he.querySelector(".ext-hint");
+        if (gentleHint && !gentleHint.classList.contains("answer-reveal")) gentleHint.open = true;
+      }
       if (touchMode && hb.querySelector(".clue-meta")) hb.querySelector(".clue-meta").appendChild(progressLabel);
       else header.appendChild(progressLabel);
       keyboardHelp.textContent = touchMode
@@ -916,6 +930,7 @@
         hints.forEach((text, hi) => {
           const det = document.createElement("details");
           det.className = "ext-hint";
+          det.open = touchMode && hi === 0;
           const sm = document.createElement("summary");
           sm.textContent = ["Gentle hint", "More specific hint", "Strong hint"][hi] || `Hint ${hi + 1}`;
           const pp = document.createElement("p");
