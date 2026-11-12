@@ -8,7 +8,8 @@
       "href": "puzzles/theres-no-there-there-2026-11-10.html",
       "screenshot": "screenshots/theres-no-there-there-2026-11-10.png",
       "whiteCellCount": 185,
-      "progressRevision": 1
+      "progressRevision": 1,
+      "publication": "WSJ"
     },
     {
       "id": "money-is-tight-2026-11-09",
@@ -18,7 +19,8 @@
       "href": "puzzles/money-is-tight-2026-11-09.html",
       "screenshot": "screenshots/money-is-tight-2026-11-09.png",
       "whiteCellCount": 183,
-      "progressRevision": 1
+      "progressRevision": 1,
+      "publication": "WSJ"
     },
     {
       "id": "jump-scares-2026-10-29",
@@ -28,7 +30,8 @@
       "href": "puzzles/jump-scares-2026-10-29.html",
       "screenshot": "screenshots/jump-scares-2026-10-29.png",
       "whiteCellCount": 189,
-      "progressRevision": 1
+      "progressRevision": 1,
+      "publication": "WSJ"
     },
     {
       "id": "set-aside-2026-10-28",
@@ -38,7 +41,8 @@
       "href": "puzzles/set-aside-2026-10-28.html",
       "screenshot": "screenshots/set-aside-2026-10-28.png",
       "whiteCellCount": 191,
-      "progressRevision": 1
+      "progressRevision": 1,
+      "publication": "WSJ"
     },
     {
       "id": "on-the-wrong-track-2026-10-17",
@@ -48,7 +52,8 @@
       "href": "puzzles/on-the-wrong-track-2026-10-17.html",
       "screenshot": "screenshots/on-the-wrong-track-2026-10-17.png",
       "whiteCellCount": 363,
-      "progressRevision": 1
+      "progressRevision": 1,
+      "publication": "WSJ"
     },
     {
       "id": "all-aboard-2026-09-09",
@@ -58,7 +63,8 @@
       "href": "puzzles/all-aboard-2026-09-09.html",
       "screenshot": "screenshots/all-aboard-2026-09-09.png",
       "whiteCellCount": 189,
-      "progressRevision": 1
+      "progressRevision": 1,
+      "publication": "WSJ"
     },
     {
       "id": "final-assessment-2026-04-12",
@@ -68,7 +74,41 @@
       "href": "puzzles/final-assessment-2026-04-12.html",
       "screenshot": "screenshots/Screenshot 2026-04-12 at 4.48.05 PM.png",
       "whiteCellCount": 363,
-      "progressRevision": 2
+      "progressRevision": 2,
+      "publication": "WSJ"
+    },
+    {
+      "id": "nyt-friday-2013-05-24",
+      "title": "Friday, May 24, 2013",
+      "author": "Joe Krozel",
+      "publication": "NYT",
+      "date": "2013-05-24",
+      "href": "puzzles/nyt-friday-2013-05-24.html",
+      "screenshot": "screenshots/nyt-friday-2013-05-24.png",
+      "whiteCellCount": 196,
+      "progressRevision": 1
+    },
+    {
+      "id": "nyt-friday-2009-10-30",
+      "title": "Friday, October 30, 2009",
+      "author": "David Levinson Wilk",
+      "publication": "NYT",
+      "date": "2009-10-30",
+      "href": "puzzles/nyt-friday-2009-10-30.html",
+      "screenshot": "screenshots/nyt-friday-2009-10-30.png",
+      "whiteCellCount": 196,
+      "progressRevision": 1
+    },
+    {
+      "id": "nyt-friday-2011-07-29",
+      "title": "Friday, July 29, 2011",
+      "author": "Paula Gamache",
+      "publication": "NYT",
+      "date": "2011-07-29",
+      "href": "puzzles/nyt-friday-2011-07-29.html",
+      "screenshot": "screenshots/nyt-friday-2011-07-29.png",
+      "whiteCellCount": 196,
+      "progressRevision": 1
     }
   ]
 }

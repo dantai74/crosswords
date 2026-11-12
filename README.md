@@ -30,6 +30,8 @@ The grid uses larger cells with the active word highlighted. On wide screens, th
 
 Each entry has a gentle hint, a more specific hint, and a strong hint. Open them individually as needed. **Reveal answer (spoiler)** is a separate control; opening it does not fill in your grid.
 
+The library groups puzzles into **Wall Street Journal** and **New York Times** sections, each ordered newest first. Jump links lead to either collection. Compact phone rows show the puzzle's author/date and progress together. The personal and family use notice remains below both collections.
+
 Click any blue, underlined word in the active clue or either clue list, such as **Orly**, to search Google for that word's meaning in a new tab. The lookup searches only the selected word. In the clue lists, click the numbered button to select the clue in the grid.
 
 If browser storage is unavailable or full, a status message appears and you can keep solving in memory. Those changes may be lost when you leave the page.
@@ -154,6 +156,12 @@ The bundled **Final Assessment** puzzle has a corrected 21×21 grid, all 138 ent
 **There’s No There There**, by Mat Holmes (November 10, 2026), has 76 entries and 228 authored hints, verified against the supplied solution. Four theme answers give literal readings of the ALL X, NO Y pattern. See [its transcription notes](docs/theres-no-there-there-transcription.md).
 
 ## Writing hints
+
+The **New York Times puzzle for Friday, May 24, 2013**, by Joe Krozel, has 72 entries and 216 authored hints verified against the supplied filled grid and clue/answer listing. The player starts blank; the supplied completed grid is labeled as a solution spoiler. See [its transcription notes](docs/nyt-friday-transcription.md).
+
+The **New York Times puzzle for Friday, October 30, 2009**, by David Levinson Wilk, also has 72 entries and 216 hints verified against the supplied filled grid and clue/answer listing. Its completed reference stays behind a solution-spoiler control. See [its transcription notes](docs/nyt-friday-2009-transcription.md).
+
+The **New York Times puzzle for Friday, July 29, 2011**, by Paula Gamache, has 72 entries and 216 hints verified against the supplied filled grid and clue/answer listing. It starts blank and keeps its completed reference behind the solution-spoiler control. See [its transcription notes](docs/nyt-friday-2011-transcription.md).
 
 Hints are authored in each entry's `hints` array, not generated at runtime. Write three clue-specific tiers: explain the interpretation, narrow the meaning or reference, then provide a strong nudge. For puns, explain the wordplay; for names, identify the relevant person without substituting the wrong part of the name. Keep the full answer in `answer` for the separate spoiler control. Do not fill hint tiers with generic solving advice or a restatement of the grid length.
 

@@ -263,17 +263,17 @@
       sourceReference = document.createElement("details");
       sourceReference.className = "source-reference";
       const summary = document.createElement("summary");
-      summary.textContent = "View original puzzle";
+      summary.textContent = data.sourceScreenshotIsSolution ? "View solution (spoiler)" : "View original puzzle";
       sourceReference.appendChild(summary);
       const fig = document.createElement("figure");
       fig.className = "source-shot";
       const img = document.createElement("img");
       img.src = data.sourceScreenshot;
       img.loading = "lazy";
-      img.alt = "Original puzzle screenshot";
+      img.alt = data.sourceScreenshotIsSolution ? "Completed solution grid" : "Original puzzle screenshot";
       fig.appendChild(img);
       const cap = document.createElement("figcaption");
-      cap.textContent = `Original printed puzzle · ${data.title}${data.author ? " by " + data.author : ""}`;
+      cap.textContent = `${data.sourceScreenshotIsSolution ? "Solution" : "Original printed puzzle"} · ${data.title}${data.author ? " by " + data.author : ""}`;
       fig.appendChild(cap);
       sourceReference.appendChild(fig);
     }

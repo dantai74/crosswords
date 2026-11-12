@@ -39,6 +39,44 @@ a {
   max-width: 42rem;
 }
 
+.library-nav {
+  display: flex;
+  gap: 0.5rem;
+  margin-block: 0 1.25rem;
+}
+
+.library-nav a {
+  padding: 0.5rem 0.85rem;
+  border: 1px solid #d8d5ca;
+  border-radius: 999px;
+  text-decoration: none;
+  font: 600 0.85rem / 1.5 system-ui, sans-serif;
+}
+
+.puzzle-library {
+  max-width: 52rem;
+}
+
+.puzzle-library section {
+  margin-bottom: 1.5rem;
+  scroll-margin-top: 1rem;
+}
+
+.puzzle-library h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.2rem;
+}
+
+.collection-count {
+  color: var(--muted);
+  font: 400 0.85rem system-ui, sans-serif;
+}
+
+.puzzle-library .pct {
+  font: 400 0.75rem / 1.5 system-ui, sans-serif;
+  vertical-align: middle;
+}
+
 .puzzle-table {
   width: 100%;
   max-width: 52rem;
@@ -1052,23 +1090,31 @@ a:focus-visible {
   }
 
   .puzzle-table tr {
-    margin-bottom: 0.85rem;
-    border: 1px solid #deded4;
-    border-radius: 12px;
-    padding: 0.5rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 6rem;
+    gap: 0.6rem;
+    align-items: center;
+    margin-bottom: 0;
+    border-bottom: 1px solid #deded4;
+    padding: 0.65rem 0.5rem;
     background: #fffefa;
   }
 
   .puzzle-table td {
     border: 0;
-    padding: 0.4rem 0.6rem;
+    padding: 0;
   }
 
   .puzzle-table a {
     display: flex;
     align-items: center;
     min-height: 2.75rem;
-    font-size: 1.25rem;
+    font-size: 1rem;
+    line-height: 1.25;
+  }
+
+  .puzzle-table .meta {
+    font: 400 0.7rem / 1.4 system-ui, sans-serif;
   }
 
   .puzzle-table td[data-label]::before {

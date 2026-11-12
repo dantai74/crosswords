@@ -137,6 +137,12 @@ test("Final Assessment has a full solution and distinct, non-placeholder hint ti
 });
 
 for (const spec of [
+  { slug: "nyt-friday", fixture: "nyt-friday-2011", title: "Friday, July 29, 2011", author: "Paula Gamache", date: "2011-07-29",
+    cells: 196, across: 36, down: 36, hints: 216, themes: [] },
+  { slug: "nyt-friday", fixture: "nyt-friday-2009", title: "Friday, October 30, 2009", author: "David Levinson Wilk", date: "2009-10-30",
+    cells: 196, across: 36, down: 36, hints: 216, themes: [] },
+  { slug: "nyt-friday", title: "Friday, May 24, 2013", author: "Joe Krozel", date: "2013-05-24",
+    cells: 196, across: 36, down: 36, hints: 216, themes: [] },
   { slug: "theres-no-there-there", title: "There’s No There There", author: "Mat Holmes", date: "2026-11-10",
     cells: 185, across: 37, down: 39, hints: 228,
     themes: [[20, "ALLBARKNOBITE"], [28, "ALLFLASHNOCASH"], [47, "ALLHATNOCATTLE"], [54, "ALLFOAMNOBEER"]] },
@@ -162,7 +168,7 @@ for (const spec of [
     context.window = context;
     vm.runInContext(read(`web/puzzles/${spec.slug}-${spec.date}.data.js`), context);
     const data = JSON.parse(JSON.stringify(context.PUZZLE_DATA));
-    const source = JSON.parse(read(`tests/fixtures/${spec.slug}-source.json`));
+    const source = JSON.parse(read(`tests/fixtures/${spec.fixture || spec.slug}-source.json`));
     const engine = context.CrosswordEngine;
     const words = engine.validatePuzzle(data);
     assert.equal(data.title, spec.title);
@@ -335,15 +341,16 @@ function element(tag) {
 }
 
 function indexRuntime(fetch) {
-  const tbody = element("tbody");
+  const elements = Object.fromEntries(["library-status", "wsj-rows", "nyt-rows", "wsj-count", "nyt-count"].map((id) => [id, element("div")]));
+  const tbody = elements["wsj-rows"];
   const context = vm.createContext({
     fetch,
-    document: { getElementById: () => tbody, createElement: element },
+    document: { getElementById: (id) => elements[id], createElement: element },
     window: { CrosswordProgress: { statsForPuzzle: () => ({ total: 0 }) }, addEventListener() {} },
   });
   const inline = read("web/index.html").match(/<script>([\s\S]*?)<\/script>/)[1];
   vm.runInContext(inline, context);
-  return { context, tbody };
+  return { context, tbody, elements, status: elements["library-status"] };
 }
 
 for (const [name, fetch] of [
@@ -353,9 +360,9 @@ for (const [name, fetch] of [
   ["invalid schema", async () => ({ ok: true, json: async () => ({ puzzles: [null] }) })],
 ]) {
   test("index shows a retry action after " + name, async () => {
-    const { tbody } = indexRuntime(fetch);
+    const { status } = indexRuntime(fetch);
     await new Promise(setImmediate);
-    const cell = tbody.children[0].children[0];
+    const cell = status;
     assert.match(cell.children[0].textContent, /Could not load the puzzle list/);
     assert.equal(cell.children[1].textContent, "Retry");
     assert.equal(typeof cell.children[1].listeners.click, "function");
@@ -364,15 +371,15 @@ for (const [name, fetch] of [
 
 test("retry replaces the error with the loaded puzzle list", async () => {
   let offline = true;
-  const { tbody } = indexRuntime(async () => {
+  const { tbody, status, elements } = indexRuntime(async () => {
     if (offline) throw new Error("Offline");
     return { ok: true, json: async () => JSON.parse(read("web/manifest.json")) };
   });
   await new Promise(setImmediate);
-  const retry = tbody.children[0].children[0].children[1];
+  const retry = status.children[1];
   offline = false;
   await retry.listeners.click();
-  assert.equal(tbody.children.length, JSON.parse(read("web/manifest.json")).puzzles.length);
+  assert.equal(tbody.children.length + elements["nyt-rows"].children.length, JSON.parse(read("web/manifest.json")).puzzles.length);
   assert.match(tbody.children.map((row) => row.innerHTML).join(""), /Final Assessment/);
 });
 
@@ -381,7 +388,32 @@ test("manifest rejects duplicate IDs and invalid puzzle URLs", async () => {
   const meta = JSON.parse(read("web/manifest.json")).puzzles[0];
   assert.throws(() => context.validateManifest({ puzzles: [meta, meta] }), /duplicate/);
   assert.throws(() => context.validateManifest({ puzzles: [{ ...meta, href: "javascript:alert(1)" }] }), /invalid/);
+  assert.throws(() => context.validateManifest({ puzzles: [{ ...meta, publication: "unknown" }] }), /invalid/);
   await new Promise(setImmediate);
+});
+
+test("library groups publications, sorts by date and retains the legal notice", async () => {
+  const manifest = JSON.parse(read("web/manifest.json"));
+  const { context, elements } = indexRuntime(async () => ({ ok: true, json: async () => manifest }));
+  await new Promise(setImmediate);
+  const wsj = elements["wsj-rows"].children.map((row) => row.innerHTML).join("");
+  const nyt = elements["nyt-rows"].children.map((row) => row.innerHTML).join("");
+  assert.match(wsj, /There’s No There There/);
+  assert.doesNotMatch(wsj, /Joe Krozel/);
+  assert.match(nyt, /Joe Krozel/);
+  assert.doesNotMatch(nyt, /Money Is Tight/);
+  assert.equal(elements["nyt-count"].textContent, "3");
+  assert.match(elements["nyt-rows"].children[0].innerHTML, /Friday, May 24, 2013/);
+  assert.match(elements["nyt-rows"].children[1].innerHTML, /Friday, July 29, 2011/);
+  assert.match(elements["nyt-rows"].children[2].innerHTML, /Friday, October 30, 2009/);
+  const older = manifest.puzzles.find((p) => p.date === "2026-09-09");
+  const newer = manifest.puzzles.find((p) => p.date === "2026-11-10");
+  context.render([older, newer]);
+  assert.match(elements["wsj-rows"].children[0].innerHTML, /There’s No There There/);
+  const markup = read("web/index.html");
+  assert.match(markup, /Notice: Personal and Family Use Only/);
+  assert.match(markup, /please discontinue use and leave immediately/);
+  assert.match(markup, /this notice grants no license to/);
 });
 
 test("saved view rejects invalid coordinates and directions and tolerates blocked storage", () => {

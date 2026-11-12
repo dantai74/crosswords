@@ -83,6 +83,8 @@ Defined in each `puzzles/<slug>.data.js`.
 - **`answerExplanation`:** Optional non-empty string shown only inside the answer spoiler. For split theme answers, `answer` must contain the physical slot's letters; explain the full phrase and where the other letters went here. Jump Scares uses this for its four separated BOO phrases.
 - **`progressRevision`:** Optional positive integer shared with the manifest entry. When grid corrections change coordinates, increment it to use a separate save slot; retain the stable puzzle `id`.
 - **`circledCells`:** Optional puzzle-level array of zero-based `[row, column]` coordinates. Coordinates must be unique white cells. The shell draws circles and includes “circled” in the inputs' accessible labels. Money Is Tight uses 16 circles to spell four increasingly compressed CENTs.
+- **`sourceScreenshotIsSolution`:** Optional boolean. Set true when the reference image is a completed grid; the shell labels the collapsed reference “View solution (spoiler)” with matching image description/caption. Filled source letters go only in `answer`, never initial progress. Preserve any separate clue/answer screenshot as `clueScreenshot`.
+- **`publication`:** Manifest collection identifier, `"WSJ"` or `"NYT"`. The index groups puzzles into those two sections and sorts dates descending within each. Omitted values default to WSJ for older entries. Keep the full personal/family-use legal footer when changing the library layout.
 
 ## Critical implementation details
 

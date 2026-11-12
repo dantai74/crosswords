@@ -299,6 +299,20 @@ test("Jump Scares preserves theme fragments and keeps their explanations inside 
   }
 });
 
+test("NYT filled source becomes an empty playable grid and a collapsed solution spoiler", () => {
+  for (const file of ["nyt-friday-2013-05-24", "nyt-friday-2009-10-30", "nyt-friday-2011-07-29"]) {
+    const { root } = mount(undefined, `puzzles/${file}.data.js`);
+    const inputs = root.querySelectorAll("input");
+    assert.equal(inputs.length, 196);
+    assert.ok(inputs.every((input) => input.value === ""));
+    const reference = root.querySelector(".source-reference");
+    assert.equal(Boolean(reference.open), false);
+    assert.equal(reference.querySelector("summary").textContent, "View solution (spoiler)");
+    assert.equal(reference.querySelector("img").alt, "Completed solution grid");
+    assert.equal(root.querySelector(".answer-reveal").open, undefined);
+  }
+});
+
 test("desktop keeps editable inputs, expanded hints, and no touch keyboard", () => {
   const scrolls = [];
   const { root, document } = mount(undefined, undefined, { scrollBy: (options) => scrolls.push(options) });
@@ -340,7 +354,7 @@ test("phone hints hide lookup help and open the gentle hint on expansion and clu
 });
 
 test("small touch screens use a dedicated keyboard and collapsed hints for every puzzle", () => {
-  for (const file of ["final-assessment-2026-04-12", "set-aside-2026-10-28", "jump-scares-2026-10-29", "on-the-wrong-track-2026-10-17", "all-aboard-2026-09-09", "money-is-tight-2026-11-09", "theres-no-there-there-2026-11-10"]) {
+  for (const file of ["final-assessment-2026-04-12", "set-aside-2026-10-28", "jump-scares-2026-10-29", "on-the-wrong-track-2026-10-17", "all-aboard-2026-09-09", "money-is-tight-2026-11-09", "theres-no-there-there-2026-11-10", "nyt-friday-2013-05-24", "nyt-friday-2009-10-30", "nyt-friday-2011-07-29"]) {
     const { root, document } = mount(undefined, `puzzles/${file}.data.js`, { touch: true });
     assert.equal(root.querySelector(".touch-keyboard").hidden, false);
     assert.equal(root.querySelector(".puzzle-shell").classList.contains("touch-mode"), true);

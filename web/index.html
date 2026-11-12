@@ -4,32 +4,37 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Crossword puzzles</title>
-    <link rel="stylesheet" href="styles.css?v=20261109-1" />
+    <link rel="stylesheet" href="styles.css?v=20261112-1" />
   </head>
   <body>
     <header class="index-header">
       <h1>Crossword puzzles</h1>
       <p>
-        Open a puzzle to solve in the browser. Progress is stored locally in this
-        browser. Take your time, and open a hint whenever you need a nudge.
+        Pick a puzzle. Your progress stays in this browser.
       </p>
     </header>
 
-    <table class="puzzle-table" aria-label="Puzzles and progress">
-      <thead>
-        <tr>
-          <th scope="col">Puzzle</th>
-          <th scope="col" class="pct">Progress</th>
-          <th scope="col">Updated</th>
-        </tr>
-      </thead>
-      <tbody id="puzzle-rows"></tbody>
-    </table>
-
-    <p class="muted" style="margin-top: 1.5rem; max-width: 42rem">
-      Everyone can solve at their own pace. Your progress stays on this device;
-      use the same browser to pick up where you left off.
-    </p>
+    <nav class="library-nav" aria-label="Puzzle collections">
+      <a href="#wsj">WSJ</a>
+      <a href="#nyt">New York Times</a>
+    </nav>
+    <main class="puzzle-library">
+      <div id="library-status" role="status"></div>
+      <section id="wsj" aria-labelledby="wsj-heading">
+        <h2 id="wsj-heading">Wall Street Journal <span id="wsj-count" class="collection-count"></span></h2>
+        <table class="puzzle-table" aria-label="Wall Street Journal puzzles and progress">
+          <thead><tr><th scope="col">Puzzle</th><th scope="col">Progress</th></tr></thead>
+          <tbody id="wsj-rows"></tbody>
+        </table>
+      </section>
+      <section id="nyt" aria-labelledby="nyt-heading">
+        <h2 id="nyt-heading">New York Times <span id="nyt-count" class="collection-count"></span></h2>
+        <table class="puzzle-table" aria-label="New York Times puzzles and progress">
+          <thead><tr><th scope="col">Puzzle</th><th scope="col">Progress</th></tr></thead>
+          <tbody id="nyt-rows"></tbody>
+        </table>
+      </section>
+    </main>
 
     <footer class="private-use-notice" aria-labelledby="private-use-heading">
       <h2 id="private-use-heading">Notice: Personal and Family Use Only</h2>
@@ -50,41 +55,36 @@
 
     <script src="shared/progress.js?v=20261109-1"></script>
     <script>
-      const tbody = document.getElementById("puzzle-rows");
-
-      function fmtDate(ts) {
-        if (!ts) return "—";
-        try {
-          return new Date(ts).toLocaleString();
-        } catch {
-          return "—";
-        }
-      }
+      const status = document.getElementById("library-status");
+      const collections = {
+        WSJ: { tbody: document.getElementById("wsj-rows"), count: document.getElementById("wsj-count") },
+        NYT: { tbody: document.getElementById("nyt-rows"), count: document.getElementById("nyt-count") },
+      };
 
       function render(rows) {
-        tbody.innerHTML = "";
-        for (const p of rows) {
-          const st = window.CrosswordProgress.statsForPuzzle(p);
-          const tr = document.createElement("tr");
-          const pct =
-            st.total > 0
-              ? `<div class="bar" aria-hidden="true"><span style="width:${st.percent}%"></span></div>${st.filled} / ${st.total} (${st.percent}%)`
-              : "—";
-          let correct = "";
-          if (st.checkable != null && st.checkable > 0) {
-            correct = `<div class="meta">${st.correct ?? 0} correct of ${st.checkable} checkable</div>`;
+        status.innerHTML = "";
+        for (const [publication, collection] of Object.entries(collections)) {
+          collection.tbody.innerHTML = "";
+          const puzzles = rows.filter((p) => (p.publication || "WSJ") === publication)
+            .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+          collection.count.textContent = String(puzzles.length);
+          for (const p of puzzles) {
+            const st = window.CrosswordProgress.statsForPuzzle(p);
+            const tr = document.createElement("tr");
+            const progress = st.completed
+              ? '<strong class="completed-badge">✓ Completed</strong>'
+              : st.total > 0
+                ? `<span class="progress-label">${st.filled} / ${st.total} · ${st.percent}%</span><div class="bar" aria-hidden="true"><span style="width:${st.percent}%"></span></div>`
+                : "Not started";
+            tr.innerHTML = `
+              <td class="puzzle-info">
+                <a href="${escapeHtml(p.href)}">${escapeHtml(p.title)}</a>
+                <div class="meta">${escapeHtml(p.author || "")}${p.date ? " · " + escapeHtml(p.date) : ""}</div>
+              </td>
+              <td class="pct">${progress}</td>
+            `;
+            collection.tbody.appendChild(tr);
           }
-          tr.innerHTML = `
-            <td>
-              <a href="${escapeHtml(p.href)}">${escapeHtml(p.title)}</a>
-              <div class="meta">${escapeHtml(p.author || "")}${
-            p.date ? " · " + escapeHtml(p.date) : ""
-          }</div>
-            </td>
-            <td class="pct" data-label="Progress">${st.completed ? '<strong class="completed-badge">✓ Completed</strong>' : ""}${pct}${correct}</td>
-            <td data-label="Last played">${fmtDate(st.updatedAt)}</td>
-          `;
-          tbody.appendChild(tr);
         }
       }
 
@@ -110,7 +110,8 @@
               (puzzle.progressRevision !== undefined &&
                 (!Number.isSafeInteger(puzzle.progressRevision) || puzzle.progressRevision <= 0)) ||
               (puzzle.author !== undefined && typeof puzzle.author !== "string") ||
-              (puzzle.date !== undefined && typeof puzzle.date !== "string")) {
+              (puzzle.date !== undefined && typeof puzzle.date !== "string") ||
+              (puzzle.publication !== undefined && !["WSJ", "NYT"].includes(puzzle.publication))) {
             throw new Error("Manifest contains an invalid or duplicate puzzle entry.");
           }
           ids.add(puzzle.id);
@@ -129,10 +130,7 @@
           render(rows);
         } catch (err) {
           if (version !== loadVersion) return;
-          tbody.innerHTML = "";
-          const row = document.createElement("tr");
-          const cell = document.createElement("td");
-          cell.colSpan = 3;
+          status.innerHTML = "";
           const message = document.createElement("p");
           message.setAttribute("role", "alert");
           message.textContent = "Could not load the puzzle list. " + err.message;
@@ -140,9 +138,7 @@
           retry.type = "button";
           retry.textContent = "Retry";
           retry.addEventListener("click", load);
-          cell.append(message, retry);
-          row.appendChild(cell);
-          tbody.appendChild(row);
+          status.append(message, retry);
         }
       }
 
